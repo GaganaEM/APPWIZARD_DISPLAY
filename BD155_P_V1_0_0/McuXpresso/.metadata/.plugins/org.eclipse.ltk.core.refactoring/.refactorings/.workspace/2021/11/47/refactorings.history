@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Delete 2 resources" deleteContents="false" description="Delete 2 resources" element1="/VMS_Display_V0/AppWizard/Resource" element2="/VMS_Display_V0/AppWizard/Source" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="2" stamp="1636972491445"/>&#x0A;<refactoring comment="Delete resource &apos;evkbimxrt1050_iled_blinky&apos;" deleteContents="true" description="Delete resource &apos;evkbimxrt1050_iled_blinky&apos;" element1="/evkbimxrt1050_iled_blinky" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1637212845103"/>
+</session>

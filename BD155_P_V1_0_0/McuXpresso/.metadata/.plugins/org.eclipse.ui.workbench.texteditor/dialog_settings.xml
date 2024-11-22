@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="wrap" value="false"/>
+		<item key="casesensitive" value="true"/>
+		<item key="wholeword" value="false"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<item key="selection" value="giScreenSwitch"/>
+		<list key="findhistory">
+			<item value="giScreenSwitch"/>
+			<item value="GPIO_AD_B0_11_GPIO1_IO11"/>
+			<item value="kXBARA_OutputLogicAND1"/>
+			<item value="_DAY_Copy"/>
+			<item value="DAY_Copy"/>
+			<item value="NIGHT"/>
+			<item value="ID_VAR_ICON_TOP"/>
+			<item value="funcCheckPrevDiagnosticMessage"/>
+			<item value="funcDM1MessageSelection"/>
+			<item value="funcGaugeMovement"/>
+			<item value="funcClockDataIn"/>
+			<item value="funcClockDataOut"/>
+			<item value="funcI2cRead"/>
+			<item value="funcI2cWrite"/>
+			<item value="funcreadADCValues"/>
+		</list>
+		<list key="replacehistory">
+			<item value="2_DAY"/>
+			<item value="NIGHT"/>
+			<item value="CheckPrevDiagnosticMessage"/>
+			<item value="DM1MessageSelection"/>
+			<item value="GaugeMovement"/>
+			<item value="ClockDataIn"/>
+			<item value="ClockDataOut"/>
+			<item value="I2cRead"/>
+			<item value="I2cWrite"/>
+			<item value="ReadADCValues"/>
+			<item value="Max22190DeviceProcess"/>
+			<item value="WriteSpiMax22190"/>
+			<item value="ProcessScreen"/>
+			<item value="StoreDiagnosticMessage"/>
+			<item value="MailBoxConfiguration"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="1025"/>
+		<item key="DIALOG_Y_ORIGIN" value="328"/>
+		<item key="DIALOG_WIDTH" value="422"/>
+		<item key="DIALOG_HEIGHT" value="446"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+	</section>
+</section>

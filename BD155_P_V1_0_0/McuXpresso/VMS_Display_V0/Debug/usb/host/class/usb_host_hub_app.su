@@ -1,0 +1,14 @@
+../usb/host/class/usb_host_hub_app.c:118:31:USB_HostHubGetHubList	0	static
+../usb/host/class/usb_host_hub_app.c:153:13:USB_HostHubGetInterruptStatus	16	static
+../usb/host/class/usb_host_hub_app.c:181:13:USB_HostHubProcess	24	static
+../usb/host/class/usb_host_hub_app.c:383:13:USB_HostHubProcessPort	8	static
+../usb/host/class/usb_host_hub_app.c:398:13:USB_HostHubProcessPortAttach	40	static
+../usb/host/class/usb_host_hub_app.c:623:13:USB_HostHubProcessPortDetach	32	static
+../usb/host/class/usb_host_hub_app.c:779:13:USB_HostHubProcessData	24	static
+../usb/host/class/usb_host_hub_app.c:836:13:USB_HostHubControlCallback	16	static
+../usb/host/class/usb_host_hub_app.c:1111:6:USB_HostHubInterruptInCallback	16	static
+../usb/host/class/usb_host_hub_app.c:1158:14:USB_HostHubDeviceEvent	40	static
+../usb/host/class/usb_host_hub_app.c:1378:14:USB_HostHubRemovePort	24	static
+../usb/host/class/usb_host_hub_app.c:1422:10:USB_HostHubGetHsHubNumber	24	static
+../usb/host/class/usb_host_hub_app.c:1471:10:USB_HostHubGetHsHubPort	24	static
+../usb/host/class/usb_host_hub_app.c:1519:10:USB_HostHubGetTotalThinkTime	24	static

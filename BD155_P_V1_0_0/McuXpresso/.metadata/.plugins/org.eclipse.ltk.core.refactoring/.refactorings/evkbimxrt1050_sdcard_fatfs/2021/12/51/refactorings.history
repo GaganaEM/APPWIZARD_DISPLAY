@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;evkbimxrt1050_sdcard_fatfs/fatfs/source/ff.c&apos; to &apos;ffsd.c&apos;" description="Rename resource &apos;ff.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="fatfs/source/ff.c" name="ffsd.c" stamp="1639720311862" updateReferences="false"/>&#x0A;<refactoring comment="Rename resource &apos;evkbimxrt1050_sdcard_fatfs/fatfs/source/ff.h&apos; to &apos;ffsd.h&apos;" description="Rename resource &apos;ff.h&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="fatfs/source/ff.h" name="ffsd.h" stamp="1639720322055" updateReferences="false"/>
+</session>

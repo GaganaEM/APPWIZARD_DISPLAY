@@ -1,0 +1,8 @@
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\VMS_Display_V0\CMSIS/mpu_armv7.h:191:22:ARM_MPU_Enable	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\VMS_Display_V0\CMSIS/mpu_armv7.h:203:22:ARM_MPU_Disable	4	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\VMS_Display_V0\drivers/fsl_clock.h:1138:24:CLOCK_GetMux	0	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\VMS_Display_V0\drivers/fsl_clock.h:1175:24:CLOCK_GetDiv	0	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\VMS_Display_V0\drivers/fsl_clock.h:1236:24:CLOCK_GetOscFreq	0	static
+../board/board.c:24:10:BOARD_DebugConsoleSrcFreq	8	static
+../board/board.c:43:6:BOARD_InitDebugConsole	8	static
+../board/board.c:235:6:BOARD_ConfigMPU	24	static

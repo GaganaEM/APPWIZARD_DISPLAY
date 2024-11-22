@@ -1,0 +1,3 @@
+../source/Files_Application/J1939Stack/sourceJ1939Dm1.c:9:6:StoreDiagnosticMessage	4	static
+../source/Files_Application/J1939Stack/sourceJ1939Dm1.c:19:9:CheckPrevDiagnosticMessage	4	static
+../source/Files_Application/J1939Stack/sourceJ1939Dm1.c:34:6:LoadFaultToStruct	32	static

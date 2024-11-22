@@ -1,0 +1,1771 @@
+#include "../../Files_Header/sourceMacro.h"
+#include "../../Files_Header/sourceInclude.h"
+#include "../../Files_Header/sourceExternVariable.h"
+
+#include "sourceJ1939Stack.h"
+
+void funcReadMailbox(unsigned char lcCanPort, uint16_t liMailboxNo)
+{
+    uint32_t llCanJ1939Pgn = 0;
+    struct CanJ1939Frame CanJ1939RxFrame;
+
+    CanJ1939RxFrame.CanJ1939Dlc    =   rxXfer.frame->length;
+    CanJ1939RxFrame.CanData.Unit   =   rxXfer.frame->dataWord0;
+    CanJ1939RxFrame.CanData.Unit   =   CanJ1939RxFrame.CanData.Unit << 32;
+    CanJ1939RxFrame.CanData.Unit   =   CanJ1939RxFrame.CanData.Unit | rxXfer.frame->dataWord1;
+    CanJ1939RxFrame.CanId.Unit     =   rxXfer.frame->id;
+
+    if(CanJ1939RxFrame.CanId.Id.CanJ1939PduFormat < 240)
+    {
+        CanJ1939RxFrame.CanId.Id.CanJ1939PduSpecific = 0;
+    }
+    else
+    {
+
+    }
+
+    llCanJ1939Pgn = (CanJ1939RxFrame.CanId.Unit & 0x03FFFF00) >> 8;
+
+    if((CanJ1939RxFrame.CanId.Id.CanJ1939DataPage == 1) || (CanJ1939RxFrame.CanId.Id.CanJ1939ExtendedDataPage == 1))
+    {
+
+    }
+    else
+    {
+
+    }
+
+    switch(lcCanPort)
+    {
+        case CANA:
+                    CanaJ1939RxFrame = CanJ1939RxFrame;
+                    funcDecodeCanRecievedData(lcCanPort, llCanJ1939Pgn);
+                    break;
+        case CANB :
+                    CanbJ1939RxFrame = CanJ1939RxFrame;
+                    funcDecodeCanRecievedData(lcCanPort, llCanJ1939Pgn);
+                    break;
+        default :
+                    break;
+    }
+
+}
+
+void funcDecodeCanRecievedData(uint16_t liCanPort, uint32_t llCanJ1939Pgn)
+{
+	funcDecodeCanRxData(liCanPort, llCanJ1939Pgn);
+}
+
+void funcDecodeCanRxData(unsigned char liCanPort, uint32_t llCanJ1939Pgn)
+{
+    switch(llCanJ1939Pgn)
+    {
+        case 0xEA00 :   funcRecieveCanTPFrame(liCanPort, llCanJ1939Pgn);
+                        break;
+        case 0xEB00 :   funcRecieveCanTPFrame(liCanPort, llCanJ1939Pgn);
+                        break;
+        case 0xEC00 :   funcRecieveCanTPFrame(liCanPort, llCanJ1939Pgn);
+                        break;
+        case 0xFF00:  	funcRecieveCanTPFrame(liCanPort, llCanJ1939Pgn);
+        				break;
+        case 0xFF01:  	funcRecieveCanTPFrame(liCanPort, llCanJ1939Pgn);
+        				break;
+        default :
+                        break;
+    }
+}
+
+void funcRecieveCanTPFrame(unsigned char lcCanPort, uint32_t llCanJ1939Pgn)
+{
+    uint16_t liFrameNumber        = 0;
+    uint16_t liMessageSize        = 0;
+    uint16_t liPacketSize         = 0;
+    uint16_t luiNumOfBytes        = 0;
+    uint16_t luiNumOfFrames       = 0;
+    uint16_t liConnAbortReason    = 0;
+    uint32_t llPgnNo              = 0;
+    uint32_t llRequestedPgn       = 0;
+
+    struct CanJ1939Frame CanJ1939RxFrame;
+    struct CanMsgStatusTp strCanTp;
+
+    switch(lcCanPort)
+    {
+        case CANA : strCanTp = strCanaTp;
+                    CanJ1939RxFrame = CanaJ1939RxFrame;
+
+                    break;
+        case CANB : strCanTp = strCanbTp;
+                    CanJ1939RxFrame = CanbJ1939RxFrame;
+                    break;
+        default :
+                    break;
+    }
+
+    switch(llCanJ1939Pgn)
+    {
+        case 0xEA00 :
+                        llRequestedPgn = CanJ1939RxFrame.CanData.part.CanJ1939Byte3 << 8;
+                        llRequestedPgn = llRequestedPgn | (CanJ1939RxFrame.CanData.part.CanJ1939Byte2 << 8);
+                        llRequestedPgn = llRequestedPgn | CanJ1939RxFrame.CanData.part.CanJ1939Byte1;
+
+                        if(llRequestedPgn == RESPONDPGN)
+                        {
+                            strCanTp.CanStatusFlags.RecievedPgnRequest = 1;
+                            strCanTp.RequestedPgn = llRequestedPgn;
+                        }
+                        else
+                        {}
+
+                        break;
+        case 0xEB00 :
+
+                        switch(lcCanPort)
+                        {
+                            case CANA :
+                                        if((strCanTp.CanStatusFlags.SpecificInitReception == 1) || (strCanTp.CanStatusFlags.BamInitReception == 1))
+                                        {
+                                            liFrameNumber = CanJ1939RxFrame.CanData.part.CanJ1939Byte1 - 1;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte1 = CanJ1939RxFrame.CanData.part.CanJ1939Byte1;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte2 = CanJ1939RxFrame.CanData.part.CanJ1939Byte2;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte3 = CanJ1939RxFrame.CanData.part.CanJ1939Byte3;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte4 = CanJ1939RxFrame.CanData.part.CanJ1939Byte4;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte5 = CanJ1939RxFrame.CanData.part.CanJ1939Byte5;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte6 = CanJ1939RxFrame.CanData.part.CanJ1939Byte6;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte7 = CanJ1939RxFrame.CanData.part.CanJ1939Byte7;
+                                            CanaRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte8 = CanJ1939RxFrame.CanData.part.CanJ1939Byte8;
+                                        }
+                                        else
+                                        {
+
+                                        }
+                                        if(strCanTp.CanStatusFlags.SpecificInitReception==1 && liFrameNumber >= strCanTp.TotalFrame - 1)
+                                        {
+                                            strCanTp.CanStatusFlags.TransmitEof = 1;
+                                        }
+                                        else if(strCanTp.CanStatusFlags.BamInitReception == 1 && liFrameNumber >= strCanTp.TotalFrame - 1)
+                                        {
+                                             memset(&strCanTp,0,sizeof(strCanTp));
+                                             rx_complete = 1;
+                                        }
+                                        else
+                                        {}
+
+                                        break;
+                            case CANB :
+										if((strCanTp.CanStatusFlags.SpecificInitReception == 1) || (strCanTp.CanStatusFlags.BamInitReception == 1))
+										{
+											liFrameNumber = CanJ1939RxFrame.CanData.part.CanJ1939Byte1 - 1;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte1 = CanJ1939RxFrame.CanData.part.CanJ1939Byte1;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte2 = CanJ1939RxFrame.CanData.part.CanJ1939Byte2;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte3 = CanJ1939RxFrame.CanData.part.CanJ1939Byte3;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte4 = CanJ1939RxFrame.CanData.part.CanJ1939Byte4;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte5 = CanJ1939RxFrame.CanData.part.CanJ1939Byte5;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte6 = CanJ1939RxFrame.CanData.part.CanJ1939Byte6;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte7 = CanJ1939RxFrame.CanData.part.CanJ1939Byte7;
+											CanbRecieveMsgBuffer[liFrameNumber].byte.TpMsgByte8 = CanJ1939RxFrame.CanData.part.CanJ1939Byte8;
+										}
+										else
+										{}
+
+										if(strCanTp.CanStatusFlags.SpecificInitReception==1 && liFrameNumber >= strCanTp.TotalFrame - 1)
+										{
+											noOfFramesReceived = strCanTp.TotalFrame - 1;
+
+											if(sendLog == 0)
+											{
+												strCanTp.CanStatusFlags.TransmitEof = 1;
+												strDataMonitorFlags.dataDownlodingStarted = 0;
+											}
+											else
+											{
+												sendLogSerially = 1;
+											}
+
+//											strCanTp.CanStatusFlags.TransmitEof = 1;
+
+										}
+										else if(strCanTp.CanStatusFlags.BamInitReception == 1 && liFrameNumber >= strCanTp.TotalFrame - 1)
+										{
+											memset(&strCanTp,0,sizeof(strCanTp));
+										}
+										else
+										{}
+                                        break;
+                            default :
+                                        break;
+                        }
+
+                        break;
+        case 0xEC00 :
+                        /* Receive - BAM : Broadcast Announce Message Transport */
+                        if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x20)
+                        {
+                            luiNumOfBytes = CanJ1939RxFrame.CanData.part.CanJ1939Byte3 << 8;
+                            luiNumOfBytes = (luiNumOfBytes | CanJ1939RxFrame.CanData.part.CanJ1939Byte2);
+
+                            luiNumOfFrames = CanJ1939RxFrame.CanData.part.CanJ1939Byte4;
+
+                            llPgnNo = CanJ1939RxFrame.CanData.part.CanJ1939Byte8 << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte7)  << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte6);
+
+                            strCanTp.Pgn         = llPgnNo;
+                            strCanTp.DataLength  = luiNumOfBytes;
+                            strCanTp.TotalFrame  = luiNumOfFrames;
+
+                            strCanTp.CanStatusFlags.CommunicationActive    = 1;
+                            strCanTp.CanStatusFlags.BamInitReception       = 1;
+
+                            if(llPgnNo == 0xF678)
+                            {
+                             	memset(&strDataDownloadFlags,	0,	sizeof(strDataDownloadFlags));
+                            }
+
+                            memset(&CanaRecieveMsgBuffer,0,sizeof(CanaRecieveMsgBuffer));
+                        }
+                        /* Received RTS : Request to Send */
+                        else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x10)
+                        {
+                            luiNumOfBytes = CanJ1939RxFrame.CanData.part.CanJ1939Byte3 << 8;
+                            luiNumOfBytes = (luiNumOfBytes | CanJ1939RxFrame.CanData.part.CanJ1939Byte2);
+
+                            luiNumOfFrames = CanJ1939RxFrame.CanData.part.CanJ1939Byte4;
+
+                            llPgnNo = CanJ1939RxFrame.CanData.part.CanJ1939Byte8 << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte7)  << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte6);
+
+                            strCanTp.Pgn          = llPgnNo;
+                            strCanTp.DataLength   = luiNumOfBytes;
+                            strCanTp.TotalFrame   = luiNumOfFrames;
+
+                            strCanTp.CanStatusFlags.RecievedRts = 1;
+
+                            strDataMonitorFlags.dataDownlodingStarted = 1;
+
+                            if(llPgnNo == 0xFF00)
+                            {
+//                             	memset(&CanDataReceiveFlags, 0, sizeof(CanDataReceiveFlags));
+
+                            }
+                            else if(llPgnNo == 0xFF01)
+                            {
+                             	strDataDownloadFlags.digitalError	= 1;
+                            }
+                            else if(llPgnNo == 0xFF02)
+                            {
+                             	strDataDownloadFlags.analogError	= 1;
+                            }
+                            else if(llPgnNo == 0xFF03)
+                            {
+                             	strDataDownloadFlags.digitalperiodic	= 1;
+                            }
+                            else if(llPgnNo == 0xFF04)
+                            {
+                             	strDataDownloadFlags.analogPeriodic	= 1;
+                            }
+							else if(llPgnNo == 0xFF05)
+							{
+								strDataDownloadFlags.digitalActiveError 	= 1;
+							}
+							else if(llPgnNo == 0xFF06)
+							{
+								strDataDownloadFlags.analogActiveError = 1;
+							}
+                            else
+                            {
+
+                            }
+
+                        }
+                        /* CTS - Clear to Send */
+                        else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x11)
+                        {
+                            if(CanJ1939RxFrame.CanData.part.CanJ1939Byte2 == 0x00)
+                            {
+
+                            }
+                            else
+                            {
+                                strCanTp.FrameNumber = CanJ1939RxFrame.CanData.part.CanJ1939Byte3 - 1;
+                                strCanTp.CtsFrames = strCanTp.FrameNumber + CanJ1939RxFrame.CanData.part.CanJ1939Byte2;
+
+                                llPgnNo = CanJ1939RxFrame.CanData.part.CanJ1939Byte8 << 8;
+                                llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte7)  << 8;
+                                llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte6);
+
+                                if(llPgnNo == strCanTp.Pgn)
+                                {
+                                    strCanTp.CanStatusFlags.RecievedCts = 1;
+                                }
+                                else
+                                {}
+                            }
+                        }
+                        /* End of Frame */
+                        else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x13)
+                        {
+                            liMessageSize = CanJ1939RxFrame.CanData.part.CanJ1939Byte3 << 8;
+                            liMessageSize = (liMessageSize | CanJ1939RxFrame.CanData.part.CanJ1939Byte2);
+
+                            liPacketSize  = CanJ1939RxFrame.CanData.part.CanJ1939Byte4;
+
+                            llPgnNo = CanJ1939RxFrame.CanData.part.CanJ1939Byte8 << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte7)  << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte6);
+
+                            if(llPgnNo == strCanTp.Pgn)
+                            {
+                                strCanTp.CanStatusFlags.RecievedEof = 1;
+                            }
+                            else
+                            {}
+                        }
+                        /* Connection abort */
+                        else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0xFF)
+                        {
+                            strCanTp.CtsFrames = CanJ1939RxFrame.CanData.part.CanJ1939Byte2;
+
+                            liConnAbortReason = CanaJ1939RxFrame.CanData.part.CanJ1939Byte3 << 8;
+                            liConnAbortReason = (liConnAbortReason | CanaJ1939RxFrame.CanData.part.CanJ1939Byte2);
+
+                            llPgnNo = CanJ1939RxFrame.CanData.part.CanJ1939Byte8 << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte7)  << 8;
+                            llPgnNo = (llPgnNo | CanJ1939RxFrame.CanData.part.CanJ1939Byte6);
+
+                            if(llPgnNo == strCanTp.Pgn)
+                            {
+                                strCanTp.CanStatusFlags.RecievedAbort = 1;
+                            }
+                            else
+                            {}
+                        }
+                        else
+                        {}
+                        break;
+
+        case 0xFF00 :
+            /* Receive - Proprietary PGN - No of Data Log Read */
+            if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x10)
+            {
+            	strDataMonitorFlags.RecvdNoOfLogs = 1;
+
+            	gulNoOfStoredDataRcvd = CanJ1939RxFrame.CanData.part.CanJ1939Byte3;
+            	gulNoOfStoredDataRcvd = gulNoOfStoredDataRcvd << 8;
+            	gulNoOfStoredDataRcvd = gulNoOfStoredDataRcvd | CanJ1939RxFrame.CanData.part.CanJ1939Byte4;
+            	gulNoOfStoredDataRcvd = gulNoOfStoredDataRcvd << 8;
+            	gulNoOfStoredDataRcvd = gulNoOfStoredDataRcvd | CanJ1939RxFrame.CanData.part.CanJ1939Byte5;
+//            	if(CanJ1939RxFrame.CanData.part.CanJ1939Byte2 == 0x01)
+//            	{
+//
+//            	}
+//            	else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x02)
+//            	{
+//
+//            	}
+//            	else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x03)
+//            	{
+//
+//            	}
+//            	else if(CanJ1939RxFrame.CanData.part.CanJ1939Byte1 == 0x04)
+//            	{
+//
+//            	}
+//            	else
+//            	{
+//
+//            	}
+            }
+        	break;
+        case 0xFF01 :
+            	gulNoOfStoredDataRcvd = CanJ1939RxFrame.CanData.part.CanJ1939Byte1;
+            	gulNoOfStoredDataRcvd = gulNoOfStoredDataRcvd << 8;
+            	gulNoOfStoredDataRcvd = gulNoOfStoredDataRcvd | CanJ1939RxFrame.CanData.part.CanJ1939Byte2;
+            	giRpmValue = gulNoOfStoredDataRcvd;
+        default:
+
+        	break;
+    }
+
+    switch(lcCanPort)
+    {
+        case CANA :
+                    strCanaTp = strCanTp;
+                    CanaJ1939RxFrame = CanJ1939RxFrame;
+                    break;
+        case CANB :
+                    strCanbTp = strCanTp;
+                    CanbJ1939RxFrame = CanJ1939RxFrame;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcExtractCanRecievedData(unsigned char lcCanPort, uint32_t llJ1939RxFlags)
+{
+    strCanFlag.Recieve.all = llJ1939RxFlags;
+
+    if(strCanFlag.Recieve.all != 0)
+    {
+        if(strCanFlag.Recieve.bit.Mailbox10 == 1)
+        {
+            strCanFlag.Recieve.bit.Mailbox10 = 0;
+            funcReadMailbox(lcCanPort, 10);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox11 == 1)
+        {
+            funcReadMailbox(lcCanPort, 11);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox12 == 1)
+        {
+            funcReadMailbox(lcCanPort, 12);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox13 == 1)
+        {
+            funcReadMailbox(lcCanPort, 13);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox14 == 1)
+        {
+            funcReadMailbox(lcCanPort, 14);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox15 == 1)
+        {
+            funcReadMailbox(lcCanPort, 15);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox16 == 1)
+        {
+            funcReadMailbox(lcCanPort, 16);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox17 == 1)
+        {
+            funcReadMailbox(lcCanPort, 17);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox18 == 1)
+        {
+            funcReadMailbox(lcCanPort, 18);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox19 == 1)
+        {
+            funcReadMailbox(lcCanPort, 19);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox20 == 1)
+        {
+            funcReadMailbox(lcCanPort, 20);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox21 == 1)
+        {
+            funcReadMailbox(lcCanPort, 21);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox22 == 1)
+        {
+            funcReadMailbox(lcCanPort, 22);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox23 == 1)
+        {
+            funcReadMailbox(lcCanPort, 23);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox24 == 1)
+        {
+            funcReadMailbox(lcCanPort, 24);
+        }
+        else
+        {
+
+        }
+        if(strCanFlag.Recieve.bit.Mailbox25 == 1)
+        {
+            funcReadMailbox(lcCanPort, 25);
+        }
+        else
+        {
+
+        }
+        if(strCanFlag.Recieve.bit.Mailbox26 == 1)
+        {
+            funcReadMailbox(lcCanPort, 26);
+        }
+        else
+        {
+
+        }
+        if(strCanFlag.Recieve.bit.Mailbox27 == 1)
+        {
+            funcReadMailbox(lcCanPort, 27);
+        }
+        else
+        {
+
+        }
+        if(strCanFlag.Recieve.bit.Mailbox28 == 1)
+        {
+            funcReadMailbox(lcCanPort, 28);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox29 == 1)
+        {
+            funcReadMailbox(lcCanPort, 29);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox30 == 1)
+        {
+            funcReadMailbox(lcCanPort, 30);
+        }
+        else
+        {}
+
+        if(strCanFlag.Recieve.bit.Mailbox31 == 1)
+        {
+            funcReadMailbox(lcCanPort, 31);
+        }
+        else
+        {}
+    }
+    else
+    {}
+}
+
+void funcTransmitCanFrame(void)
+{
+    memset(&strCanaTx,0,sizeof(strCanaTx));
+    funcSelectCanFrameToTransmit();
+
+    if(strCanaTx.flMs10_1 == TRUE)
+    {
+
+    }
+    else
+    {
+
+    }
+    if(strCanaTx.flMs10_2 == TRUE)
+    {
+
+    }
+    else
+    {
+
+    }
+    if(strCanaTx.flMs10_3 == TRUE)
+    {
+
+    }
+    else
+    {
+
+    }
+    if(strCanaTx.flMs10_4 == TRUE)
+    {
+    }
+    else
+    {
+
+    }
+    if(strCanaTx.flMs20_1 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs20_2 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs20_3 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs20_4 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs50_1 == TRUE)
+    {
+//       /* Can-A */
+//       strCanaTp = funcTransmitCanTPFrame(CANA, strCanaTp);
+//       /* Can-B */
+//       strCanbTp = funcTransmitCanTPFrame(CANB, strCanbTp);
+    }
+    else
+    {}
+
+
+    if(strCanaTx.flMs50_2 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs50_3 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs50_4 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs50_5 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs100_1 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs100_2 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs100_3 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs100_4 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs100_5 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs100_6 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs200_1 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs200_2 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs200_3 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs200_4 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs250_1 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs250_2 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs250_3 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs500_1 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs500_2 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs500_3 == TRUE)
+    {
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs1000_1 == TRUE)
+    {
+    	Frame1.MailboxNumber = 1;
+    	Frame1.FrameId		 = 0x0CEA0709;
+    	Frame1.FramePriority = 6;
+    	Frame1.FrameData	 = 0x1122334455667788;
+    	funcCanTransmitMailbox(CANB, Frame1);
+    }
+    else
+    {}
+
+    if(strCanaTx.flMs1000_2 == TRUE)
+    {
+    }
+    else
+    {}
+}
+
+struct CanMsgStatusTp funcTransmitCanTPFrame(unsigned char lcCanPort, struct CanMsgStatusTp strCanTp)
+{
+    if(strCanTp.CanStatusFlags.BroadcastInitilize == 1)
+    {
+        if(strCanTp.CanStatusFlags.BamInitTransmit == 1)
+        {
+            if((strCanTp.DataLength % 7) != 0)
+            {
+                strCanTp.TotalFrame = (strCanTp.DataLength / 7) + 1;
+            }
+            else
+            {
+                strCanTp.TotalFrame = strCanTp.DataLength / 7;
+            }
+
+            CanMsgByte.byte.MsgByte1    =   32;
+            CanMsgByte.byte.MsgByte2    =   strCanTp.DataLength;
+            CanMsgByte.byte.MsgByte3    =   strCanTp.DataLength >> 8;
+            CanMsgByte.byte.MsgByte4    =   strCanTp.TotalFrame;
+            CanMsgByte.byte.MsgByte5    =   255;
+            CanMsgByte.byte.MsgByte6    =   strCanTp.Pgn;
+            CanMsgByte.byte.MsgByte7    =   strCanTp.Pgn >> 8;
+            CanMsgByte.byte.MsgByte8    =   strCanTp.Pgn >> 16;
+
+            strCanTp.CanStatusFlags.BamInitTransmit    =   0;
+            strCanTp.CanStatusFlags.DataTransmit       =   1;
+            strCanTp.DataLength                        =   0;
+
+            TpFrame.FrameId              = 0x0CEC00FF;
+            TpFrame.FrameData            = CanMsgByte.all;
+
+            funcCanTransmitMailbox(lcCanPort, TpFrame);
+
+        }
+        else if(strCanTp.CanStatusFlags.DataTransmit == 1)
+        {
+            TpFrame.FrameId              = 0x0CEB00FF;
+            TpFrame.FramePriority        = 3;
+
+            switch(lcCanPort)
+            {
+            	case CANA :
+							CanaTransmitMsgBuffer[strCanTp.FrameNumber].byte.TpMsgByte1 = strCanTp.FrameNumber + 1;
+							TpFrame.FrameData                               = CanaTransmitMsgBuffer[strCanTp.FrameNumber].all;
+            				break;
+            	case CANB :
+							CanbTransmitMsgBuffer[strCanTp.FrameNumber].byte.TpMsgByte1 = strCanTp.FrameNumber + 1;
+							TpFrame.FrameData                               = CanbTransmitMsgBuffer[strCanTp.FrameNumber].all;
+							break;
+            	default :
+            				break;
+            }
+
+            funcCanTransmitMailbox(lcCanPort, TpFrame);
+            strCanTp.FrameNumber++;
+
+            if(strCanTp.FrameNumber >= strCanTp.TotalFrame)
+            {
+                memset(&strCanTp,0,sizeof(strCanTp));
+            }
+            else
+            {}
+
+        }
+        else
+        {}
+    }
+    else if(strCanTp.CanStatusFlags.SpecificInitilize == 1)
+    {
+        if(strCanTp.CanStatusFlags.TransmitRts == 1)
+        {
+            if((strCanTp.DataLength % 7) != 0)
+            {
+                strCanTp.TotalFrame = (strCanTp.DataLength / 7) + 1;
+            }
+            else
+            {
+                strCanTp.TotalFrame = strCanTp.DataLength / 7;
+            }
+
+            CanMsgByte.byte.MsgByte1    =   16;
+            CanMsgByte.byte.MsgByte2    =   strCanTp.DataLength;
+            CanMsgByte.byte.MsgByte3    =   strCanTp.DataLength >> 8;
+            CanMsgByte.byte.MsgByte4    =   strCanTp.TotalFrame;
+            CanMsgByte.byte.MsgByte5    =   255;
+            CanMsgByte.byte.MsgByte6    =   strCanTp.Pgn;
+            CanMsgByte.byte.MsgByte7    =   strCanTp.Pgn >> 8;
+            CanMsgByte.byte.MsgByte8    =   strCanTp.Pgn >> 16;
+
+            strCanTp.CanStatusFlags.TransmitRts        =   0;
+            strCanTp.CanStatusFlags.DataTransmit       =   1;
+            strCanTp.FrameNumber        =   0;
+
+            TpFrame.FrameId             = 0x0CEC00FF;
+            TpFrame.FrameData           = CanMsgByte.all;
+
+            funcCanTransmitMailbox(lcCanPort, TpFrame);
+        }
+        else if(strCanTp.CanStatusFlags.RecievedCts == 1)
+        {
+            TpFrame.FrameId              = 0x0CEB00FF;
+
+            switch(lcCanPort)
+            {
+            	case CANA :
+							CanaTransmitMsgBuffer[strCanTp.FrameNumber].byte.TpMsgByte1 = strCanTp.FrameNumber + 1;
+							TpFrame.FrameData                               = CanaTransmitMsgBuffer[strCanTp.FrameNumber].all;
+            				break;
+            	case CANB :
+							CanbTransmitMsgBuffer[strCanTp.FrameNumber].byte.TpMsgByte1 = strCanTp.FrameNumber + 1;
+							TpFrame.FrameData                               = CanbTransmitMsgBuffer[strCanTp.FrameNumber].all;
+							break;
+            	default :
+            				break;
+            }
+
+            funcCanTransmitMailbox(lcCanPort, TpFrame);
+
+            strCanTp.FrameNumber++;
+
+            if(strCanTp.FrameNumber > strCanTp.TotalFrame)
+            {
+                strCanTp.CanStatusFlags.TransmitRts         =   0;
+                strCanTp.CanStatusFlags.DataTransmit        =   0;
+                strCanTp.FrameNumber                        =   0;
+                strCanTp.CanStatusFlags.RecievedCts         =   0;
+            }
+            else if(strCanTp.FrameNumber == strCanTp.CtsFrames)
+            {
+                strCanTp.CanStatusFlags.RecievedCts         =   0;
+            }
+            else
+            {}
+        }
+        else if(strCanTp.CanStatusFlags.RecievedEof == 1)
+        {
+            memset(&strCanTp,0,sizeof(strCanTp));
+        }
+        else if(strCanTp.CanStatusFlags.RecievedAbort == 1)
+        {
+            memset(&strCanTp,0,sizeof(strCanTp));
+            strCanTp.CanStatusFlags.TransmissionFail        =   1;
+        }
+        else
+        {}
+    }
+    /* CTS Transmit Function */
+    else if(strCanTp.CanStatusFlags.RecievedRts == 1)
+    {
+        CanMsgByte.byte.MsgByte1    =   17;
+        CanMsgByte.byte.MsgByte2    =   strCanTp.TotalFrame;
+        CanMsgByte.byte.MsgByte3    =   1;
+        CanMsgByte.byte.MsgByte4    =   255;
+        CanMsgByte.byte.MsgByte5    =   255;
+        CanMsgByte.byte.MsgByte6    =   strCanTp.Pgn;
+        CanMsgByte.byte.MsgByte7    =   strCanTp.Pgn >> 8;
+        CanMsgByte.byte.MsgByte8    =   strCanTp.Pgn >> 16;
+
+        TpFrame.FrameId              = 0x0CEC00FF;
+        TpFrame.FrameData            = CanMsgByte.all;
+
+        funcCanTransmitMailbox(lcCanPort, TpFrame);
+
+        strCanTp.CanStatusFlags.RecievedRts          = 0;
+        strCanTp.CanStatusFlags.DataTransmit         = 1;
+        strCanTp.CanStatusFlags.SpecificInitReception= 1;
+//        strCanTp.DataLength                          = 0;
+    }
+    else if(strCanTp.CanStatusFlags.TransmitEof == 1)
+    {
+        CanMsgByte.byte.MsgByte1    =   19;
+        CanMsgByte.byte.MsgByte2    =   strCanTp.DataLength;
+        CanMsgByte.byte.MsgByte3    =   strCanTp.DataLength >> 8;
+        CanMsgByte.byte.MsgByte4    =   strCanTp.TotalFrame;
+        CanMsgByte.byte.MsgByte5    =   255;
+        CanMsgByte.byte.MsgByte6    =   strCanTp.Pgn;
+        CanMsgByte.byte.MsgByte7    =   strCanTp.Pgn >> 8;
+        CanMsgByte.byte.MsgByte8    =   strCanTp.Pgn >> 16;
+
+        TpFrame.FrameId              = 0x0CEC00FF;
+        TpFrame.FramePriority        = 3;
+        TpFrame.FrameData            = CanMsgByte.all;
+
+        funcCanTransmitMailbox(lcCanPort, TpFrame);
+
+        memset(&strCanTp,0,sizeof(strCanTp));
+    }
+    return(strCanTp);
+}
+
+void funcInitiateTransportProtocol(uint16_t liCanPort, uint16_t liCommunicationType, uint16_t liMessageLength, uint32_t liMessagePgn)
+{
+    struct CanMsgStatusTp strCanTp;
+
+    switch(liCanPort)
+    {
+        case CANA : strCanTp = strCanaTp;
+                    break;
+        case CANB : strCanTp = strCanbTp;
+                    break;
+        default :
+                    break;
+    }
+
+    if(strCanTp.CanStatusFlags.CommunicationActive != 1)
+    {
+        switch(liCommunicationType)
+        {
+            case BROADCAST_MSG:
+                                strCanTp.CanStatusFlags.BroadcastInitilize     = 1;
+                                strCanTp.CanStatusFlags.BamInitTransmit        = 1;
+                                strCanTp.DataLength                            = liMessageLength;
+                                strCanTp.Pgn                                   = liMessagePgn;
+                                strCanTp.CanStatusFlags.CommunicationActive    = 1;
+                                break;
+            case SPECIFIC_MSG:
+                                strCanTp.CanStatusFlags.SpecificInitilize      = 1;
+                                strCanTp.CanStatusFlags.TransmitRts            = 1;
+                                strCanTp.DataLength                            = liMessageLength;
+                                strCanTp.Pgn                                   = liMessagePgn;
+                                strCanTp.CanStatusFlags.CommunicationActive    = 1;
+                                break;
+            default:
+                                break;
+        }
+    }
+    else
+    {}
+
+    switch(liCanPort)
+    {
+        case CANA : strCanaTp = strCanTp;
+                    break;
+        case CANB : strCanbTp = strCanTp;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCanaFrameConfigure(void)
+{
+    // 10ms 1
+    Frame1.FrameId = 0x0CFFFF03;
+    Frame1.FramePriority = 3;
+    Frame1.MailboxNumber = 7;
+    Frame1.FrameData    = 0x1357924680ABCDEF;
+    // 10ms 2
+    Frame2.FrameId = 0x0CF00103;
+    Frame2.FramePriority = 3;
+    Frame2.MailboxNumber = 1;
+    Frame2.FrameData    = 0x0000000000000001;
+    // 10ms 3
+    Frame3.FrameId = 0x0CF00203;
+    Frame3.FramePriority = 3;
+    Frame3.MailboxNumber = 2;
+    Frame3.FrameData    = 0x0000000000000002;
+    // 10ms 4
+    Frame4.FrameId = 0x0CF00303;
+    Frame4.FramePriority = 3;
+    Frame4.MailboxNumber = 3;
+    Frame4.FrameData    = 0x0000000000000003;
+    // 20ms 1
+    Frame5.FrameId = 0x0CF00403;
+    Frame5.FramePriority = 3;
+    Frame5.MailboxNumber = 4;
+    Frame5.FrameData    = 0x0000000000000004;
+    // 20ms 2
+    Frame6.FrameId = 0x0CF00503;
+    Frame6.FramePriority = 3;
+    Frame6.MailboxNumber = 4;
+    Frame6.FrameData    = 0x0000000000000005;
+    // 20ms 3
+    Frame7.FrameId = 0x0CF00603;
+    Frame7.FramePriority = 3;
+    Frame7.MailboxNumber = 5;
+    Frame7.FrameData    = 0x0000000000000006;
+    // 20ms 4
+    Frame8.FrameId = 0x0CF00703;
+    Frame8.FramePriority = 3;
+    Frame8.MailboxNumber = 5;
+    Frame8.FrameData    = 0x0000000000000007;
+    // 50ms 1
+    TpFrame.FrameId = 0x0CF00803;
+    TpFrame.FramePriority = 3;
+    TpFrame.MailboxNumber = 9;
+    TpFrame.FrameData    = 0x0000000000000008;
+    // 50ms 2
+    Frame10.FrameId = 0x0CF00903;
+    Frame10.FramePriority = 3;
+    Frame10.MailboxNumber = 6;
+    Frame10.FrameData    = 0x0000000000000009;
+    // 50ms 3
+    Frame11.FrameId = 0x0CF00A03;
+    Frame11.FramePriority = 3;
+    Frame11.MailboxNumber = 6;
+    Frame11.FrameData    = 0x000000000000000A;
+    // 50ms 4
+    Frame12.FrameId = 0x0CF00B03;
+    Frame12.FramePriority = 3;
+    Frame12.MailboxNumber = 6;
+    Frame12.FrameData    = 0x000000000000000B;
+    // 50ms 5
+    Frame13.FrameId = 0x0CF00C03;
+    Frame13.FramePriority = 3;
+    Frame13.MailboxNumber = 6;
+    Frame13.FrameData    = 0x000000000000000C;
+    // 100ms 1
+    Frame14.FrameId = 0x0CF01003;
+    Frame14.FramePriority = 3;
+    Frame14.MailboxNumber = 7;
+    Frame14.FrameData    = 0x0000000000000010;
+    // 100ms 2
+    Frame15.FrameId = 0x0CF01103;
+    Frame15.FramePriority = 3;
+    Frame15.MailboxNumber = 7;
+    Frame15.FrameData    = 0x0000000000000011;
+    // 100ms 3
+    Frame16.FrameId = 0x0CF01203;
+    Frame16.FramePriority = 3;
+    Frame16.MailboxNumber = 7;
+    Frame16.FrameData    = 0x0000000000000012;
+    // 100ms 4
+    Frame17.FrameId = 0x0CF01303;
+    Frame17.FramePriority = 3;
+    Frame17.MailboxNumber = 7;
+    Frame17.FrameData    = 0x0000000000000013;
+    // 100ms 5
+    Frame18.FrameId = 0x0CF01403;
+    Frame18.FramePriority = 3;
+    Frame18.MailboxNumber = 7;
+    Frame18.FrameData    = 0x0000000000000014;
+    // 100ms 6
+    Frame19.FrameId = 0x0CF01503;
+    Frame19.FramePriority = 3;
+    Frame19.MailboxNumber = 7;
+    Frame19.FrameData    = 0x0000000000000015;
+    // 200ms 1
+    Frame20.FrameId = 0x0CF01603;
+    Frame20.FramePriority = 3;
+    Frame20.MailboxNumber = 7;
+    Frame20.FrameData    = 0x0000000000000016;
+    // 200ms 2
+    Frame21.FrameId = 0x0CF01703;
+    Frame21.FramePriority = 3;
+    Frame21.MailboxNumber = 7;
+    Frame21.FrameData    = 0x0000000000000017;
+    // 200ms 3
+    Frame22.FrameId = 0x0CF01803;
+    Frame22.FramePriority = 3;
+    Frame22.MailboxNumber = 7;
+    Frame22.FrameData    = 0x0000000000000018;
+    // 200ms 4
+    Frame23.FrameId = 0x0CF01903;
+    Frame23.FramePriority = 3;
+    Frame23.MailboxNumber = 7;
+    Frame23.FrameData    = 0x0000000000000019;
+    // 250ms 1
+    Frame24.FrameId = 0x0CF01A03;
+    Frame24.FramePriority = 3;
+    Frame24.MailboxNumber = 7;
+    Frame24.FrameData    = 0x000000000000001A;
+    // 250ms 2
+    Frame25.FrameId = 0x0CF01B03;
+    Frame25.FramePriority = 3;
+    Frame25.MailboxNumber = 7;
+    Frame25.FrameData    = 0x000000000000001B;
+    // 250ms 3
+    Frame26.FrameId = 0x0CF01C03;
+    Frame26.FramePriority = 3;
+    Frame26.MailboxNumber = 7;
+    Frame26.FrameData    = 0x000000000000001C;
+    // 500ms 1
+    Frame27.FrameId = 0x0CF01D03;
+    Frame27.FramePriority = 3;
+    Frame27.MailboxNumber = 7;
+    Frame27.FrameData    = 0x000000000000001A;
+    // 500ms 2
+    Frame28.FrameId = 0x0CF01E03;
+    Frame28.FramePriority = 3;
+    Frame28.MailboxNumber = 7;
+    Frame28.FrameData    = 0x000000000000001B;
+    // 500ms 3
+    Frame29.FrameId = 0x0CF01F03;
+    Frame29.FramePriority = 3;
+    Frame29.MailboxNumber = 7;
+    Frame29.FrameData    = 0x000000000000001C;
+    // 1000ms 1
+    Frame30.FrameId = 0x0CF00D03;
+    Frame30.FramePriority = 3;
+    Frame30.MailboxNumber = 7;
+    Frame30.FrameData    = 0x000000000000000D;
+    // 1000ms 2
+    Frame31.FrameId = 0x0CF00E03;
+    Frame31.FramePriority = 3;
+    Frame31.MailboxNumber = 7;
+    Frame31.FrameData    = 0x000000000000000E;
+}
+
+void funcSelectCanFrameToTransmit(void)
+{
+    giItterateTree = giItterateTree + 1;
+    if(giItterateTree > 10)
+    {
+        giItterateTree = 1;
+    }
+    else
+    {}
+
+    switch(giItterateTree)
+    {
+        case 0x01 :
+                    funcCheckItterateBranchA1();
+                    break;
+        case 0x02 :
+                    funcCheckItterateBranchA2();
+                    break;
+        case 0x03 :
+                    funcCheckItterateBranchA3();
+                    break;
+        case 0x04 :
+                    funcCheckItterateBranchA4();
+                    break;
+        case 0x05 :
+                    funcCheckItterateBranchA5();
+                    break;
+        case 0x06 :
+                    funcCheckItterateBranchA6();
+                    break;
+        case 0x07 :
+                    funcCheckItterateBranchA7();
+                    break;
+        case 0x08 :
+                    funcCheckItterateBranchA8();
+                    break;
+        case 0x09 :
+                    //funcCheckItterateBranchA9();
+                    break;
+        case 0x0A :
+                    //funcCheckItterateBranchA10();
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA1(void)
+{
+    strCanaTx.flMs10_1 = 1;
+}
+
+void funcCheckItterateBranchA2(void)
+{
+    strCanaTx.flMs10_2 = 1;
+}
+
+void funcCheckItterateBranchA3(void)
+{
+    strCanaTx.flMs10_3 = 1;
+}
+
+void funcCheckItterateBranchA4(void)
+{
+    strCanaTx.flMs10_4 = 1;
+}
+
+void funcCheckItterateBranchA5(void)
+{
+    giItterateBranchA5 = giItterateBranchA5 + 1;
+    if(giItterateBranchA5 > 2)
+    {
+        giItterateBranchA5 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA5)
+    {
+        case 0x01 :
+                    strCanaTx.flMs20_1 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs20_2 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA6(void)
+{
+    giItterateBranchA6 = giItterateBranchA6 + 1;
+    if(giItterateBranchA6 > 2)
+    {
+        giItterateBranchA6 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA6)
+    {
+        case 0x01 :
+                    strCanaTx.flMs20_3 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs20_4 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA7(void)
+{
+    giItterateBranchA7 = giItterateBranchA7 + 1;
+    if(giItterateBranchA7 > 5)
+    {
+        giItterateBranchA7 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA7)
+    {
+        case 0x01 :
+                    strCanaTx.flMs50_1 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs50_2 = 1;
+                    break;
+        case 0x03 :
+                    strCanaTx.flMs50_3 = 1;
+                    break;
+        case 0x04 :
+                    strCanaTx.flMs50_4 = 1;
+                    break;
+        case 0x05 :
+                    strCanaTx.flMs50_5 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8(void)
+{
+    giItterateBranchA8 = giItterateBranchA8 + 1;
+    if(giItterateBranchA8 > 5)
+    {
+        giItterateBranchA8 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8)
+    {
+        case 0x01 :
+                    funcCheckItterateBranchA8B1();
+                    break;
+        case 0x02 :
+                    funcCheckItterateBranchA8B2();
+                    break;
+        case 0x03 :
+                    funcCheckItterateBranchA8B3();
+                    break;
+        case 0x04 :
+                    funcCheckItterateBranchA8B4();
+                    break;
+        case 0x05 :
+                    funcCheckItterateBranchA8B5();
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B1(void)
+{
+    giItterateBranchA8B1 = giItterateBranchA8B1 + 1;
+    if(giItterateBranchA8B1 > 2)
+    {
+        giItterateBranchA8B1 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B1)
+    {
+        case 0x01 :
+                    strCanaTx.flMs100_1 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs100_2 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B2(void)
+{
+    giItterateBranchA8B2 = giItterateBranchA8B2 + 1;
+    if(giItterateBranchA8B2 > 2)
+    {
+        giItterateBranchA8B2 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B2)
+    {
+        case 0x01 :
+                    strCanaTx.flMs100_3 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs100_4 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B3(void)
+{
+    giItterateBranchA8B3 = giItterateBranchA8B3 + 1;
+    if(giItterateBranchA8B3 > 2)
+    {
+        giItterateBranchA8B3 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B3)
+    {
+        case 0x01 :
+                    strCanaTx.flMs100_5 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs100_6 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B4(void)
+{
+    giItterateBranchA8B4 = giItterateBranchA8B4 + 1;
+    if(giItterateBranchA8B4 > 2)
+    {
+        giItterateBranchA8B4 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B4)
+    {
+        case 0x01 :
+                    funcCheckItterateBranchA8B4C1();
+                    break;
+        case 0x02 :
+                    funcCheckItterateBranchA8B4C2();
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B5(void)
+{
+    giItterateBranchA8B5 = giItterateBranchA8B5 + 1;
+    if(giItterateBranchA8B5 > 5)
+    {
+        giItterateBranchA8B5 = 1;
+    }
+    else
+    {
+
+    }
+    switch(giItterateBranchA8B5)
+    {
+        case 0x01 :
+                    funcCheckItterateBranchA8B5C1();
+                    break;
+        case 0x02 :
+                    funcCheckItterateBranchA8B5C2();
+                    break;
+        case 0x03 :
+                    funcCheckItterateBranchA8B5C3();
+                    break;
+        case 0x04 :
+                    funcCheckItterateBranchA8B5C4();
+                    break;
+        case 0x05 :
+                    funcCheckItterateBranchA8B5C5();
+                    break;
+        default :
+                    break;
+
+    }
+
+}
+
+void funcCheckItterateBranchA8B4C1(void)
+{
+    giItterateBranchA8B4C1 = giItterateBranchA8B4C1 + 1;
+    if(giItterateBranchA8B4C1 > 2)
+    {
+        giItterateBranchA8B4C1 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B3C1)
+    {
+        case 0x01 :
+                    strCanaTx.flMs200_1 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs200_2 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B4C2(void)
+{
+    giItterateBranchA8B4C2 = giItterateBranchA8B4C2 + 1;
+    if(giItterateBranchA8B4C2 > 2)
+    {
+        giItterateBranchA8B4C2 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B3C2)
+    {
+        case 0x01 :
+                    strCanaTx.flMs200_3 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs200_4 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B5C1(void)
+{
+    strCanaTx.flMs250_1 = 1;
+}
+
+void funcCheckItterateBranchA8B5C2(void)
+{
+    strCanaTx.flMs250_2 = 1;
+}
+
+void funcCheckItterateBranchA8B5C3(void)
+{
+    strCanaTx.flMs250_3 = 1;
+}
+
+void funcCheckItterateBranchA8B5C4(void)
+{
+    giItterateBranchA8B5C4 = giItterateBranchA8B5C4 + 1;
+    if(giItterateBranchA8B5C4 > 2)
+    {
+        giItterateBranchA8B5C4 = 1;
+    }
+    else
+    {
+
+    }
+    switch(giItterateBranchA8B5C4)
+    {
+        case 0x01 :
+                    strCanaTx.flMs500_1 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs500_2 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B5C5(void)
+{
+    giItterateBranchA8B5C5 = giItterateBranchA8B5C5 + 1;
+    if(giItterateBranchA8B5C5 > 2)
+    {
+        giItterateBranchA8B5C5 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B5C5)
+    {
+        case 0x01 :
+                    strCanaTx.flMs500_3 = 1;
+                    break;
+        case 0x02 :
+                    funcCheckItterateBranchA8B5C5D1();
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCheckItterateBranchA8B5C5D1(void)
+{
+    giItterateBranchA8B5C5D1 = giItterateBranchA8B5C5D1 + 1;
+    if(giItterateBranchA8B5C5D1 > 2)
+    {
+        giItterateBranchA8B5C5D1 = 1;
+    }
+    else
+    {}
+
+    switch(giItterateBranchA8B5C5D1)
+    {
+        case 0x01 :
+                    strCanaTx.flMs1000_1 = 1;
+                    break;
+        case 0x02 :
+                    strCanaTx.flMs1000_2 = 1;
+                    break;
+        default :
+                    break;
+    }
+}
+
+void funcCanTransmitMailbox(unsigned char lcCanPort, struct CanMessage strTxCanFrame)
+{
+	uint32_t llCanFlagTxFlag = 0;
+
+//	FLEXCAN_SetTxMbConfig(CAN2, strTxCanFrame.MailboxNumber, true);
+	txXfer.frame = &frame;
+	txXfer.frame->id 		= FLEXCAN_ID_EXT(strTxCanFrame.FrameId);
+	txXfer.frame->format 	= (uint8_t)kFLEXCAN_FrameFormatExtend;
+	txXfer.frame->type		= (uint8_t)kFLEXCAN_FrameTypeData;
+	txXfer.frame->length	= (uint8_t)DLC;
+	txXfer.mbIdx 			= (uint8_t)strTxCanFrame.MailboxNumber;
+
+	txXfer.frame->dataWord0 = strTxCanFrame.FrameData >> 32;
+	txXfer.frame->dataWord1 = strTxCanFrame.FrameData;
+
+//	txXfer.frame = &frame;
+
+//	switch(lcCanPort)
+//	{
+//		case CANA :
+//					(void)FLEXCAN_TransferSendNonBlocking(CAN1, &flexcanHandle, &txXfer);
+//					while (glCanaFlagTxFlag != strTxCanFrame.MailboxNumber);
+//					glCanaFlagTxFlag = 0;
+//					break;
+//		case CANB :
+//					glCanbFlagTxFlag = 0;
+//					(void)FLEXCAN_TransferSendNonBlocking(CAN2, &flexcanHandle, &txXfer);
+//					while (glCanbFlagTxFlag == 0);
+//					glCanbFlagTxFlag = 0;
+//					break;
+//		default :
+//					break;
+//	}
+
+	switch(lcCanPort)
+	{
+		case CANA :
+					(void)FLEXCAN_TransferSendNonBlocking(CAN1, &flexcanHandle, &txXfer);
+					while (glCanaFlagTxFlag != strTxCanFrame.MailboxNumber);
+					glCanaFlagTxFlag = 0;
+					break;
+		case CANB :
+					glCanbFlagTxFlag = 0;
+					CANBStartTimer=1;
+					(void)FLEXCAN_TransferSendNonBlocking(CAN2, &flexcanHandle, &txXfer);
+					while (glCanbFlagTxFlag == 0 && CANBTimeout==0);
+					CANBTimeoutCounter=0;
+					CANBStartTimer=0;
+					CANBTimeout=0;
+					glCanbFlagTxFlag = 0;
+					break;
+		default :
+					break;
+	}
+}
+
+void funcMailBoxConfiguration(unsigned char lcCanPort, uint16_t liMailboxNo, unsigned char lcMbDirection, uint32_t llMessageId, uint32_t llMaskId)
+{
+	flexcan_rx_mb_config_t mbConfig;
+
+	switch(lcMbDirection)
+	{
+		case TRANSMIT :
+							switch(lcCanPort)
+							{
+								case CANA :
+											FLEXCAN_SetTxMbConfig(CAN1, liMailboxNo, true);
+											break;
+								case CANB :
+											FLEXCAN_SetTxMbConfig(CAN2, liMailboxNo, true);
+											break;
+								default :
+											break;
+							}
+							break;
+		case TRANSMIT_MUX :
+							switch(lcCanPort)
+							{
+								case CANA :
+											FLEXCAN_SetTxMbConfig(CAN1, liMailboxNo, true);
+											break;
+								case CANB :
+											FLEXCAN_SetTxMbConfig(CAN2, liMailboxNo, true);
+											break;
+								default :
+											break;
+							}
+							break;
+		case RECIEVE :
+							switch(lcCanPort)
+							{
+								case CANA :
+											mbConfig.format = kFLEXCAN_FrameFormatExtend;
+											mbConfig.type   = kFLEXCAN_FrameTypeData;
+											mbConfig.id     = FLEXCAN_ID_EXT(llMaskId);
+											FLEXCAN_SetRxMbConfig(CAN1, liMailboxNo, &mbConfig, true);
+											rxXfer.mbIdx = (uint8_t)liMailboxNo;
+											rxXfer.frame = &frame;
+											(void)FLEXCAN_TransferReceiveNonBlocking(CAN1, &flexcanHandle, &rxXfer);
+											break;
+								case CANB :
+											mbConfig.format = kFLEXCAN_FrameFormatExtend;
+											mbConfig.type   = kFLEXCAN_FrameTypeRemote;
+											mbConfig.id     = FLEXCAN_ID_EXT(llMaskId);
+											FLEXCAN_SetRxMbConfig(CAN2, liMailboxNo, &mbConfig, true);
+											rxXfer.mbIdx = (uint8_t)liMailboxNo;
+											rxXfer.frame = &frame;
+											(void)FLEXCAN_TransferReceiveNonBlocking(CAN2, &flexcanHandle, &rxXfer);
+											break;
+								default :
+											break;
+							}
+							break;
+	}
+}
+
+void funcConfigureMailBox(Uint16 liCanChannel)
+{
+	funcMailBoxConfiguration(CANB, 1, TRANSMIT_MUX, 0x0CEA0708, 0x0CEA0708);
+    funcMailBoxConfiguration(CANB, 2, TRANSMIT_MUX, 0x0CEB0708, 0x0CEB0708);
+    funcMailBoxConfiguration(CANB, 3, TRANSMIT_MUX, 0x0CEC0708, 0x0CEC0708);
+
+    funcMailBoxConfiguration(CANB, 4, TRANSMIT_MUX, 0x0CF00103, 0x0CF00400);
+    funcMailBoxConfiguration(CANB, 5, TRANSMIT_MUX, 0x0CF00103, 0x0CF00400);
+    funcMailBoxConfiguration(CANB, 6, TRANSMIT_MUX, 0x0CF00103, 0x0CF00400);
+    funcMailBoxConfiguration(CANB, 7, TRANSMIT_MUX, 0x0CFFFF03, 0x0CFFFF03);
+    funcMailBoxConfiguration(CANB, 8, TRANSMIT_MUX, 0x0CF00103, 0x0CF00400);
+    funcMailBoxConfiguration(CANB, 9, TRANSMIT_MUX, 0x0CF00103, 0x0CF00400);
+    funcMailBoxConfiguration(CANB, 10,TRANSMIT_MUX, 0x0CF00103, 0x0CF00400);
+
+    funcMailBoxConfiguration(CANB, 11,RECIEVE     , 0x00000000, 0x0CFEEF00);
+    funcMailBoxConfiguration(CANB, 12,RECIEVE     , 0x00000000, 0x0CFED800);
+    funcMailBoxConfiguration(CANB, 13,RECIEVE     , 0x00000000, 0xFFEC00FF);
+    funcMailBoxConfiguration(CANB, 14,RECIEVE     , 0x00000000, 0xFFFED8FF);
+    funcMailBoxConfiguration(CANB, 15,RECIEVE     , 0x00000000, 0xFFF004FF);
+    funcMailBoxConfiguration(CANB, 16,RECIEVE     , 0x00000000, 0xFFF002FF);
+    funcMailBoxConfiguration(CANB, 17,RECIEVE     , 0x00000000, 0xFFFE69FF);
+    funcMailBoxConfiguration(CANB, 18,RECIEVE     , 0x00000000, 0xFFFEF8FF);
+    funcMailBoxConfiguration(CANB, 19,RECIEVE     , 0x00000000, 0xFFFEEFFF);
+    funcMailBoxConfiguration(CANB, 20,RECIEVE     , 0x00000000, 0xFFF005FF);
+    funcMailBoxConfiguration(CANB, 21,RECIEVE     , 0x00000000, 0xFFFEE5FF);
+
+//    funcMailBoxConfiguration(CANB, 22,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 23,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 24,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 25,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 26,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 27,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 28,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 29,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 30,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 31,RECIEVE     , 0x00000000, 0x0CF00403);
+//    funcMailBoxConfiguration(CANB, 32,RECIEVE     , 0x00000000, 0x0CF00403);
+}

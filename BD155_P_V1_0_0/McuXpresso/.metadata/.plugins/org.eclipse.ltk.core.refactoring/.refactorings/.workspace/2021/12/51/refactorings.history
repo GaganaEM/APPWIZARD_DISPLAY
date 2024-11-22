@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Delete 2 resources" deleteContents="false" description="Delete 2 resources" element1="/VMS_Display_V0/AppWizard/Resource" element2="/VMS_Display_V0/AppWizard/Source" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="2" stamp="1639460387715"/>&#x0A;<refactoring comment="Delete 2 resources" deleteContents="false" description="Delete 2 resources" element1="/VMS_Display_V0/fatfs/source/ffsd.c" element2="/VMS_Display_V0/fatfs/source/ffsd.h" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="2" stamp="1639721793979"/>
+</session>

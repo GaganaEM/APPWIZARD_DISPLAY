@@ -1,0 +1,354 @@
+/*********************************************************************
+*                     SEGGER Microcontroller GmbH                    *
+*        Solutions for real time microcontroller applications        *
+**********************************************************************
+*                                                                    *
+*        (c) 1996 - 2021  SEGGER Microcontroller GmbH                *
+*                                                                    *
+*        Internet: www.segger.com    Support:  support@segger.com    *
+*                                                                    *
+**********************************************************************
+----------------------------------------------------------------------
+File        : APPW_MainTask.c
+Purpose     : APPWIZARD application entry point
+---------------------------END-OF-HEADER------------------------------
+*/
+#include "../../source/Files_Header/sourceMacro.h"
+#include "../../source/Files_Header/sourceExternVariable.h"
+#include "../../source/Files_Header/sourceInclude.h"
+#include "Generated/Resource.h"
+/*********************************************************************
+*
+*       MainTask
+*/
+#define ID_ROTARY_RPM       (GUI_ID_USER + 33)
+void MainTask(void) {
+  unsigned int luiLoop = 0, luiLoop1 = 0, luiLoop2 = 0;
+  unsigned long lulDataVar = 0;
+  unsigned char lucDescription = 0;
+  //
+  // Setup configuration dependent pointers
+  //
+	if(gcPowerOnExecute == 1)
+	{
+		gcPowerOnExecute = 0;
+
+
+		APPW_X_Setup();
+		//
+		// Initialize AppWizard
+		//
+		APPW_Init(APPW_PROJECT_PATH);
+		//
+		// Create all persistent screens except initial screen
+		//
+		APPW_CreatePersistentScreens();
+		//
+		// Create initial screen...
+		//
+		APPW_CreateRoot(APPW_INITIAL_SCREEN, WM_HBKWIN);
+		//
+		// ...and keep it alive
+		//
+	}
+	else
+	{}
+
+//	if(once == 1)
+//	{
+//		acAPPW_Language_0[12]	= 0x41;
+//		acAPPW_Language_0[13]	= 0x41;
+//		acAPPW_Language_0[14]	= 0x41;
+//		acAPPW_Language_0[15]	= 0x41;
+//	}
+//	APPW_SetVarData(ID_VAR_VALUPDATE	, strDateTime.Date);
+
+	APPW_SetVarData(ID_VAR_DISPSREEN	, giScreenSwitch);
+
+	APPW_SetVarData(ID_VAR_POPUP		, giDMPopUp);
+	APPW_SetVarData(ID_VAR_NAVIPOPUP	, giNaviPopUp);
+	APPW_SetVarData(ID_VAR_CHANGE_LUM	, giIntensityPopUp);
+
+	APPW_SetVarData(ID_VAR_INTENSITY_PER, giIntensityPercent);
+
+	APPW_SetVarData(ID_VAR_POPUPCOL		, giPopUpCol);
+	APPW_SetVarData(ID_VAR_MODE			, giMode);
+
+	APPW_SetVarData(ID_VAR_LIGHT		, giMode);
+	APPW_SetVarData(ID_VAR_ROWSEL		, gcUserScroll);
+
+	APPW_SetVarData(ID_VAR_DAY_EDIT		, guiDate);
+	APPW_SetVarData(ID_VAR_MONTH_EDIT	, guiMonth);
+	APPW_SetVarData(ID_VAR_YEAR_EDIT	, guiYear);
+	APPW_SetVarData(ID_VAR_HOUR_EDIT	, guiHour);
+	APPW_SetVarData(ID_VAR_MIN_EDIT		, guiMinute);
+	APPW_SetVarData(ID_VAR_SEC_EDIT		, guiSecond);
+
+	APPW_SetVarData(ID_VAR_DAY			, strDateTime.Date);
+	APPW_SetVarData(ID_VAR_MONTH		, strDateTime.Month);
+	APPW_SetVarData(ID_VAR_YEAR			, strDateTime.Year);
+	APPW_SetVarData(ID_VAR_HOUR			, strDateTime.Hour);
+	APPW_SetVarData(ID_VAR_MINUTE		, strDateTime.Minute);
+	APPW_SetVarData(ID_VAR_SEC			, strDateTime.Second);
+	APPW_SetVarData(ID_VAR_MEREDIAN		, strDateTime.Meredian);
+
+    APPW_SetVarData(ID_VAR_CHANGE_ENGOIL_INTERVAL			, guiEngOilInterval);
+    APPW_SetVarData(ID_VAR_CHANGE_AIRFILTER_INTERVAL		, guiAirFilterInterval);
+    APPW_SetVarData(ID_VAR_CHANGE_HYDOIL_INTERVAL			, guiHydOilInterval);
+    APPW_SetVarData(ID_VAR_SERVICE_ENGINE_INTERVAL			, guiSerEngInterval);
+    APPW_SetVarData(ID_VAR_SERVICE_MACHINE_INTERVAL			, guiSerMacInterval);
+
+    APPW_SetVarData(ID_VAR_CHANGE_ENGOIL_NEXT				, guiEngOilNext);
+    APPW_SetVarData(ID_VAR_CHANGE_AIRFILTER_NEXT			, guiAirFilterNext);
+    APPW_SetVarData(ID_VAR_CHANGE_HYDOIL_NEXT				, guiHydOilNext);
+    APPW_SetVarData(ID_VAR_SERVICE_ENGINE_NEXT				, guiSerEngNext);
+    APPW_SetVarData(ID_VAR_SERVICE_MACHINE_NEXT				, guiSerMacNext);
+
+    APPW_SetVarData(ID_VAR_CHANGE_ENGOIL_REMAINING			, guiEngOilRemain);
+    APPW_SetVarData(ID_VAR_CHANGE_AIRFILTER_REMAINING		, guiAirFilterRemain);
+    APPW_SetVarData(ID_VAR_CHANGE_HYDOIL_REMAINING			, guiHydOilRemain);
+    APPW_SetVarData(ID_VAR_SERVICE_ENGINE_REMAINING			, guiSerEngRemain);
+    APPW_SetVarData(ID_VAR_SERVICE_MACHINE_REMAINING		, guiSerMacRemain);
+
+	APPW_SetVarData(ID_VAR_KEYPAD_X		, guiXAxis);
+	APPW_SetVarData(ID_VAR_KEYPAD_Y		, guiYAxis);
+
+	APPW_SetVarData(ID_VAR_ICON01		, giIcon01);
+	APPW_SetVarData(ID_VAR_ICON02		, giIcon02);
+	APPW_SetVarData(ID_VAR_ICON03		, giIcon03);
+	APPW_SetVarData(ID_VAR_ICON04		, giIcon04);
+	APPW_SetVarData(ID_VAR_ICON05		, giIcon05);
+	APPW_SetVarData(ID_VAR_ICON06		, giIcon06);
+	APPW_SetVarData(ID_VAR_ICON07		, giIcon07);
+	APPW_SetVarData(ID_VAR_ICON08		, giIcon08);
+	APPW_SetVarData(ID_VAR_ICON09		, giIcon09);
+	APPW_SetVarData(ID_VAR_ICON10		, giIcon10);
+	APPW_SetVarData(ID_VAR_ICON11		, giIcon11);
+	APPW_SetVarData(ID_VAR_ICON12		, giIcon12);
+	APPW_SetVarData(ID_VAR_ICON13		, giIcon13);
+	APPW_SetVarData(ID_VAR_ICON14		, giIcon14);
+	APPW_SetVarData(ID_VAR_ICON15		, giIcon15);
+
+	APPW_SetVarData(ID_VAR_ICON16		, giIcon16);
+
+	APPW_SetVarData(ID_VAR_ICON17		, giIcon17);
+	APPW_SetVarData(ID_VAR_REVCOL		, giIconRevCol);
+
+	APPW_SetVarData(ID_VAR_ICON18		, giIcon18);
+
+	APPW_SetVarData(ID_VAR_CHECKTRANS	, giCheckTrans);
+
+	APPW_SetVarData(ID_VAR_HRMETER		, giHourMeter);
+	APPW_SetVarData(ID_VAR_ODO			, giHourMeter);
+
+	APPW_SetVarData(ID_VAR_RPM			, GuageRpm.PreviousValue);
+	//APPW_SetValue                (ID_SCREEN_MAIN_DAY, ID_ROTARY_RPM, GuageRpm.PreviousValue);
+
+	APPW_SetVarData(ID_VAR_KM 			, GuageKmph.PreviousValue);
+	APPW_SetVarData(ID_VAR_EOP			, GuageEop.PreviousValue);
+	APPW_SetVarData(ID_VAR_EOT			, GuageEct.PreviousValue);
+	APPW_SetVarData(ID_VAR_BV			, GuageVolt.PreviousValue);
+	APPW_SetVarData(ID_VAR_FUEL			, GuageFuel.PreviousValue);
+
+	APPW_SetVarData(ID_VAR_TXT_RPM		, giEngineRpm);
+	APPW_SetVarData(ID_VAR_TXT_KMPH		, giVehicleSpeed);
+	APPW_SetVarData(ID_VAR_TXT_EOP		, gfEop*10);
+	APPW_SetVarData(ID_VAR_TXT_ECT		, gfEct);
+	APPW_SetVarData(ID_VAR_TXT_VOL		, gfVolt*10);
+	APPW_SetVarData(ID_VAR_TXT_FUEL		, gfFuel);
+
+	APPW_SetVarData(ID_VAR_TOP			, GuageTop.PreviousValue);
+	APPW_SetVarData(ID_VAR_TOT			, GuageTot.PreviousValue);
+	APPW_SetVarData(ID_VAR_BOT			, GuageBot.PreviousValue);
+	APPW_SetVarData(ID_VAR_VOLT			, GuageVolt2.PreviousValue);
+	APPW_SetVarData(ID_VAR_EOT2			, GuageEot.PreviousValue);
+
+	APPW_SetVarData(ID_VAR_TXT_TOP		, gfTop*10);
+	APPW_SetVarData(ID_VAR_TXT_TOT		, gfTot);
+	APPW_SetVarData(ID_VAR_TXT_BOT		, gfBot);
+	APPW_SetVarData(ID_VAR_TXT_EOT		, gfEot);
+
+	APPW_SetVarData(ID_VAR_ERRCNT1		, strDm1Screen.CurrentCount);
+	APPW_SetVarData(ID_VAR_ERRCNT2		, strDm1Screen.MaximumCount);
+	APPW_SetVarData(ID_VAR_DM_MSG		, strDm1Screen.Message);
+	APPW_SetVarData(ID_VAR_DEVID		, strDm1Screen.DeviceId);
+	APPW_SetVarData(ID_VAR_SPN			, strDm1Screen.SPN);
+	APPW_SetVarData(ID_VAR_FMI			, strDm1Screen.FMI);
+	APPW_SetVarData(ID_VAR_ADD			, strDm1Screen.Address);
+	APPW_SetVarData(ID_VAR_POPUPCOL		, strDm1Screen.Status);
+
+	APPW_SetVarData(ID_VAR_RECSTATUS	, gucRecordingStatus);
+	APPW_SetVarData(ID_VAR_COPYSTATUS	, gucCopyStatus);
+	APPW_SetVarData(ID_VAR_READSTATUS	, gucReadStatus);
+	APPW_SetVarData(ID_VAR_IDSTATUS		, gucIdStatus);
+	APPW_SetVarData(ID_VAR_LOGSIZE		, guiLogFileSize);
+	APPW_SetVarData(ID_VAR_30SECTIMER	, gucRecTimeCount);
+
+	APPW_SetVarData(ID_VAR_CURDISP1		, gucCursorArray[0]);
+	APPW_SetVarData(ID_VAR_CURDISP2		, gucCursorArray[1]);
+	APPW_SetVarData(ID_VAR_CURDISP3		, gucCursorArray[2]);
+	APPW_SetVarData(ID_VAR_CURDISP4		, gucCursorArray[3]);
+	APPW_SetVarData(ID_VAR_CURDISP5		, gucCursorArray[4]);
+	APPW_SetVarData(ID_VAR_PWDRETRY		, giPasswordRetry);
+
+	APPW_SetVarData(ID_VAR_DI1		, giIcon01-1);
+	APPW_SetVarData(ID_VAR_DI2		, giIcon14-1);
+	APPW_SetVarData(ID_VAR_DI3		, giIcon07-1);
+	APPW_SetVarData(ID_VAR_DI4		, giIcon09-1);
+	APPW_SetVarData(ID_VAR_DI5		, 0);	// CAN
+	APPW_SetVarData(ID_VAR_DI6		, giIcon04-1);
+	APPW_SetVarData(ID_VAR_DI7		, giIconRevCol);
+//	APPW_SetVarData(ID_VAR_DI8		, 0);
+//	APPW_SetVarData(ID_VAR_DI9		, 0);
+//	APPW_SetVarData(ID_VAR_DI10		, 0);
+	APPW_SetVarData(ID_VAR_DI11		, giIcon10-1);
+	APPW_SetVarData(ID_VAR_DI12		, giIcon12-1);
+	APPW_SetVarData(ID_VAR_DI13		, 0);	// CAN
+	APPW_SetVarData(ID_VAR_DI14		, 0);	// CAN
+//	APPW_SetVarData(ID_VAR_DI15		, 0);
+	APPW_SetVarData(ID_VAR_DI16		, giIcon02-1);
+	APPW_SetVarData(ID_VAR_DI17		, giIcon03-1);
+//	APPW_SetVarData(ID_VAR_DI18		, 0);
+//	APPW_SetVarData(ID_VAR_DI19		, 0);
+	APPW_SetVarData(ID_VAR_DI20		, giIcon11-1);
+	APPW_SetVarData(ID_VAR_DI21		, 0);
+//	APPW_SetVarData(ID_VAR_DI22		, 0);
+	APPW_SetVarData(ID_VAR_DI23		, giIcon05-1);
+//	APPW_SetVarData(ID_VAR_DI24		, 0);
+	APPW_SetVarData(ID_VAR_DI25		, 0);
+	APPW_SetVarData(ID_VAR_DI26		, giIcon13-1);
+	APPW_SetVarData(ID_VAR_DI27		, giIcon08-1);
+//	APPW_SetVarData(ID_VAR_DI28		, 0);
+//	APPW_SetVarData(ID_VAR_DI29		, 0);
+//	APPW_SetVarData(ID_VAR_DI30		, 0);
+//	APPW_SetVarData(ID_VAR_DI31		, 0);
+//	APPW_SetVarData(ID_VAR_DI32		, 0);
+//	APPW_SetVarData(ID_VAR_DI33		, 0);
+//	APPW_SetVarData(ID_VAR_DI34		, 0);
+	APPW_SetVarData(ID_VAR_DI35		, giIcon15-1);
+
+	APPW_SetVarData(ID_VAR_FREQ1	, guiFreq1);
+	APPW_SetVarData(ID_VAR_FREQ2	, guiFreq2);
+
+	APPW_SetVarData(ID_VAR_AI1_RAW	, guiEopCounts);
+	APPW_SetVarData(ID_VAR_AI2_RAW	, guiEotCounts);
+	APPW_SetVarData(ID_VAR_AI3_RAW	, guiEctCounts);
+	APPW_SetVarData(ID_VAR_AI4_RAW	, guiTotCounts);
+	APPW_SetVarData(ID_VAR_AI5_RAW	, guiTopCounts);
+	APPW_SetVarData(ID_VAR_AI6_RAW	, guiFuelCounts);
+	APPW_SetVarData(ID_VAR_AI14_RAW	, guiBotCounts);
+
+	APPW_SetVarData(ID_VAR_ENGOILPRESS	, gfEop);
+	APPW_SetVarData(ID_VAR_ENGOILTEMP	, gfEot);
+	APPW_SetVarData(ID_VAR_ENGCLNTTEMP	, gfEct);
+	APPW_SetVarData(ID_VAR_TRANSOILTEMP	, gfTot);
+	APPW_SetVarData(ID_VAR_TRANSOILPRESS, gfTop);
+	APPW_SetVarData(ID_VAR_FUELLVL		, gfFuel);
+	APPW_SetVarData(ID_VAR_BRAKEOILPRESS, gfBot);
+
+	APPW_SetVarData(ID_VAR_ENGSPEED		, giEngineRpm);
+	APPW_SetVarData(ID_VAR_VEHICLESPEED , giVehicleSpeed);
+	APPW_SetVarData(ID_VAR_TRANSOPSHSPEED, giOutputRpm);
+	APPW_SetVarData(ID_VAR_TRANSCURGEAR , giCurrentGear);
+
+	APPW_SetVarData(ID_VAR_BLOCK_SELECTED , gcScrollSel);
+
+	APPW_SetVarData(ID_VAR_BATTERY_VOL , gfVolt*10);
+
+	APPW_SetVarData(ID_VAR_ROW_COLOUR , gcDiagScroll);
+
+
+	gucDiagScrollPer = (gcDiagScroll * 100) / (gucFaultLogs[2] + gucFaultLogs[1] + gucFaultLogs[0]);
+	APPW_SetVarData(ID_VAR_DIAG_SCROLL , gucDiagScrollPer);
+
+	luiLoop2 = 0;
+	for(luiLoop = 0; luiLoop < 3; luiLoop++)
+	{
+		for(luiLoop1 = 0; luiLoop1 < gucFaultLogs[luiLoop]; luiLoop1++)
+		{
+			luiLoop2++;
+
+			lulDataVar	 				= strDM1Log[luiLoop][luiLoop1].SpnFmi;
+
+			switch(lulDataVar)
+			{
+				case 0xFCDEB :
+							lucDescription = 1;
+							break;
+				default :
+							lucDescription = 2;
+							break;
+			}
+
+			APPW_SetVarData(ID_VAR_SOURCE1 + luiLoop2 - 1 	, strDM1Log[luiLoop][luiLoop1].SourceAddress);
+			APPW_SetVarData(ID_VAR_SPN1 + luiLoop2 - 1     	, lulDataVar & 0x7FFFF);
+			APPW_SetVarData(ID_VAR_FMI1 + luiLoop2 - 1    	, lulDataVar >> 19);
+			APPW_SetVarData(ID_VAR_COUNT1 + luiLoop2 - 1   	, strDM1Log[luiLoop][luiLoop1].OccuranceCount);
+			APPW_SetVarData(ID_VAR_PLUG1 + luiLoop2 - 1    	, 1);
+			APPW_SetVarData(ID_VAR_DESCRIPT1 + luiLoop2 - 1 , lucDescription);
+
+			if(gcDiagScroll == luiLoop2-1)
+			{
+				APPW_SetVarData(ID_VAR_SOURCE11 , strDM1Log[luiLoop][luiLoop1].SourceAddress);
+				APPW_SetVarData(ID_VAR_SPN11    , lulDataVar & 0x7FFFF);
+				APPW_SetVarData(ID_VAR_FMI11    , lulDataVar >> 19);
+				APPW_SetVarData(ID_VAR_COUNT11  , strDM1Log[luiLoop][luiLoop1].OccuranceCount);
+				APPW_SetVarData(ID_VAR_PLUG11   , 1);
+				APPW_SetVarData(ID_VAR_DESCRIPT11, lucDescription);
+			}
+
+//			switch(luiLoop2)
+//			{
+//				case 1 :
+//						lulDataVar	 				= strDM1Log[luiLoop][luiLoop1].SpnFmi;
+//
+//						switch(lulDataVar)
+//						{
+//							case 0xFCDEB :
+//										lucDescription = 1;
+//										break;
+//							default :
+//										lucDescription = 2;
+//										break;
+//						}
+//
+//						APPW_SetVarData(ID_VAR_SOURCE1 , strDM1Log[luiLoop][luiLoop1].SourceAddress);
+//						APPW_SetVarData(ID_VAR_SPN1    , lulDataVar & 0x7FFFF);
+//						APPW_SetVarData(ID_VAR_FMI1    , lulDataVar >> 19);
+//						APPW_SetVarData(ID_VAR_COUNT1  , strDM1Log[luiLoop][luiLoop1].OccuranceCount);
+//						APPW_SetVarData(ID_VAR_PLUG1   , 1);
+//						APPW_SetVarData(ID_VAR_DESCRIPT1, lucDescription);
+//
+//						if(gcDiagScroll == 0)
+//						{
+//							APPW_SetVarData(ID_VAR_SOURCE11 , strDM1Log[luiLoop][luiLoop1].SourceAddress);
+//							APPW_SetVarData(ID_VAR_SPN11    , lulDataVar & 0x7FFFF);
+//							APPW_SetVarData(ID_VAR_FMI11    , lulDataVar >> 19);
+//							APPW_SetVarData(ID_VAR_COUNT11  , strDM1Log[luiLoop][luiLoop1].OccuranceCount);
+//							APPW_SetVarData(ID_VAR_PLUG11   , 1);
+//							APPW_SetVarData(ID_VAR_DESCRIPT11, lucDescription);
+//						}
+//
+//						break;
+//			}
+		}
+	}
+
+	if(GuageRpm.PreviousValue > 500)
+	{
+		APPW_SetVarData(ID_VAR_ENG_RUN_STATUS	, 1);
+	}
+	else
+	{
+		APPW_SetVarData(ID_VAR_ENG_RUN_STATUS	, 0);
+	}
+
+
+
+	while (GUI_Exec1()) {
+		APPW_Exec();
+	}
+	APPW_Exec();
+}
+
+/*************************** End of file ****************************/

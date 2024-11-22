@@ -1,0 +1,13 @@
+../source/host_msd_fatfs.c:173:6:USB_HostMsdControlCallback	0	static
+../source/host_msd_fatfs.c:186:13:USB_HostMsdFatfsTestDone	8	static
+../source/host_msd_fatfs.c:317:13:USB_HostMsdFatfsDisplayFileInfo	64	static
+../source/host_msd_fatfs.c:341:16:USB_HostMsdFatfsListDirectory	344	static
+../source/host_msd_fatfs.c:399:13:USB_HostMsdFatfsTest	856	static
+../source/host_msd_fatfs.c:894:6:USB_HostMsdTask	24	static
+../source/host_msd_fatfs.c:970:14:USB_HostMsdEvent	24	static
+../source/host_msd_fatfs.c:1138:13:USB_HostMsdFatfsTest_user	24	static
+../source/host_msd_fatfs.c:1424:6:funcCopySdCardRawCanDatafileToUSB	16	static
+../source/host_msd_fatfs.c:1471:6:funcCopySdCardFaultCanDatafileToUSB	16	static
+../source/host_msd_fatfs.c:1518:6:funcusbtrail	16	static
+../source/host_msd_fatfs.c:1541:6:funcCopySdCardMinMaxCanDatafileToUSB	16	static
+../source/host_msd_fatfs.c:1590:6:funcCopySdCardDataloggingCanDatafileToUSB	16	static

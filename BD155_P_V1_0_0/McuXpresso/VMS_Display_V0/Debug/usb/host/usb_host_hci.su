@@ -1,0 +1,16 @@
+../usb/host/usb_host_hci.c:167:29:USB_HostGetInstance	24	static
+../usb/host/usb_host_hci.c:197:13:USB_HostReleaseInstance	16	static
+../usb/host/usb_host_hci.c:205:13:USB_HostGetControllerInterface	0	static
+../usb/host/usb_host_hci.c:237:14:USB_HostInit	24	static
+../usb/host/usb_host_hci.c:311:14:USB_HostDeinit	16	static
+../usb/host/usb_host_hci.c:351:14:USB_HostOpenPipe	8	static
+../usb/host/usb_host_hci.c:369:14:USB_HostClosePipe	8	static
+../usb/host/usb_host_hci.c:385:14:USB_HostSend	16	static
+../usb/host/usb_host_hci.c:423:14:USB_HostSendSetup	16	static
+../usb/host/usb_host_hci.c:473:14:USB_HostRecv	16	static
+../usb/host/usb_host_hci.c:511:14:USB_HostCancelTransfer	16	static
+../usb/host/usb_host_hci.c:537:14:USB_HostMallocTransfer	16	static
+../usb/host/usb_host_hci.c:563:14:USB_HostFreeTransfer	16	static
+../usb/host/usb_host_hci.c:584:14:USB_HostHelperGetPeripheralInformation	8	static
+../usb/host/usb_host_hci.c:682:14:USB_HostHelperParseAlternateSetting	16	static
+../usb/host/usb_host_hci.c:811:6:USB_HostGetVersion	0	static

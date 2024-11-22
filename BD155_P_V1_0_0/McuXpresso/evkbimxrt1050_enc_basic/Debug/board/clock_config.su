@@ -1,0 +1,13 @@
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_common_arm.h:225:20:_SDK_AtomicLocalClearAndSet4Byte	48	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1377:20:CLOCK_SetMux	24	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1429:20:CLOCK_SetDiv	24	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1465:20:CLOCK_ControlGate	32	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1492:20:CLOCK_DisableClock	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1632:20:CLOCK_SetXtalFreq	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1642:20:CLOCK_SetRtcXtalFreq	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_clock.h:1699:20:CLOCK_SetPllBypass	24	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_iomuxc.h:1167:20:IOMUXC_SetSaiMClkClockSource	24	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_iomuxc.h:1227:20:IOMUXC_MQSConfig	24	static
+../board/clock_config.c:47:6:BOARD_InitBootClocks	8	static
+../board/clock_config.c:169:6:BOARD_BootClockRUN	16	static
+../board/clock_config.c:614:6:BOARD_BootClockRUN_528M	16	static

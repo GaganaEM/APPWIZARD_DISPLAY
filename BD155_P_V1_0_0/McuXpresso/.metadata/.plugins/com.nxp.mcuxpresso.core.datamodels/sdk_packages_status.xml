@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdk-packages>
+<package hash="1626758266931" path="C:\Users\EME01-L-26\mcuxpresso\02\SDKPackages\SDK_2_10_0_EVK-MIMXRT1020.zip" schema="manifest-schema/sdk_manifest_v3.8.xsd"/>
+<package hash="1648457422000" path="C:\nxp\MCUXpressoIDE_11.5.1_7266\ide\plugins\com.nxp.mcuxpresso.sdk.sdk_2.x_evkb-imxrt1050_2.11.1.201911251446\sdks\2cbc6202eb9e1c719f33e3fe3fa9cb61.zip" schema="manifest-schema/sdk_manifest_v3.9.xsd"/>
+<package hash="1611146026000" path="C:\Users\EME01-L-26\mcuxpresso\02\SDKPackages\6d4b369511ba6ab6a8ab3952c8ef24ae.zip" schema="manifest-schema/sdk_manifest_v3.8.xsd"/>
+<package hash="1632914343243" path="C:\Users\EME01-L-02D19\mcuxpresso\02\SDKPackages\SDK_2_10_0_EVKB-IMXRT1050.zip" schema="manifest-schema/sdk_manifest_v3.8.xsd"/>
+<package hash="1664176896000" path="C:\nxp\MCUXpressoIDE_11.6.1_8255\ide\plugins\com.nxp.mcuxpresso.sdk.sdk_2.x_evkb-imxrt1050_2.12.1.201911251446\sdks\f9fa052f86e4f030947098cf7695e581.zip" schema="manifest-schema/sdk_manifest_v3.10.xsd"/>
+<package hash="1714364454000" path="C:\nxp\MCUXpressoIDE_11.9.0_2144\ide\plugins\com.nxp.mcuxpresso.sdk.sdk_2.x_evkb-imxrt1050_2.15.100.201911251446\sdks\57921f93468dde4c772881c15230e4a1.zip" schema="manifest-schema/sdk_manifest_v3.14.xsd"/>
+</sdk-packages>

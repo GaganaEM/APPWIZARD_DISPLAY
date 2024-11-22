@@ -1,0 +1,181 @@
+_attached=0;
+					data_copied=0;
+					Copyrawdataptr=0;
+					Copyfaultdataptr=0;
+					bStartRawFrameUsb=0;
+					bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+					bStartMinMaxFrameLog=0;
+					CopyMinMaxdataptr=0;
+#else
+					bStartDataLogging=0;
+					CopyDataloggingdataptr=0;
+#endif
+					guiPendriveStatus=3;
+					pendrivestatusstrttimer=1;
+					popeup_out_once=0;
+					pendrive_check=2;
+					gucRecordingStatus=0;
+					pendrive_detected=0;
+//					USB_HostDeinit(g_HostHandle);
+				}
+		}
+#if 0
+/*********************************************************************************************/
+		if(data_copied==1)  //copy to pendrive
+		{
+#ifdef MIN_MAX_LOGGING_REQ
+			if(sd_written == 1 && (bStartRawFrameUsb==1 || bStartFaultFrameUsb==1 || bStartMinMaxFrameLog==1))
+			{
+			   USB_HostInit(CONTROLLER_ID, &g_HostHandle, USB_HostEvent);
+			   sd_written = 0;
+			   usb_written = 1;
+//			   pendrive_check=0;
+			}
+#else
+			if(sd_written == 1 && (bStartRawFrameUsb==1 || bStartFaultFrameUsb==1 || bStartDataLogging==1))
+			{
+			   USB_HostInit(CONTROLLER_ID, &g_HostHandle, USB_HostEvent);
+			   sd_written = 0;
+			   usb_written = 1;
+//			   pendrive_check=0;
+			}
+#endif
+			 USB_HostTaskFn(g_HostHandle);
+			 USB_HostMsdTask(&g_MsdFatfsInstance);
+
+			if(usb_attached==1) //pendrive detected
+			{
+				guiPendriveStatus=1;
+				gucCopyStatus=1;
+				pendrive_counter_timeout=0;
+				pendrive_detected_timeout=0;
+				start_pendrive_timeout=0;
+				if(popeup_out_once==1)
+				{
+					popeup_out_once=0;
+					pendrivestatusstrttimer=1;
+				}
+
+				funcCopySdCardRawCanDatafileToUSB();
+				funcCopySdCardFaultCanDatafileToUSB();
+
+#ifdef MIN_MAX_LOGGING_REQ
+				funcCopySdCardMinMaxCanDatafileToUSB();
+#else
+				funcCopySdCardDataloggingCanDatafileToUSB();
+#endif
+				usb_attached=0;
+				data_copied=0;
+			}
+			else
+			{
+				if(pendrive_removed==1)
+				{
+					pendrive_removed=0;
+					guiPendrivePoPup=1;
+					gucCopyStatus=0;
+					usb_attached=0;
+					data_copied=0;
+				    Copyrawdataptr=0;
+				    Copyfaultdataptr=0;
+				    bStartRawFrameUsb=0;
+				    bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+				    bStartMinMaxFrameLog=0;
+				    CopyMinMaxdataptr=0;
+#else
+				    bStartDataLogging=0;
+				    CopyDataloggingdataptr=0;
+#endif
+				    guiPendriveStatus=3;
+				    pendrivestatusstrttimer=1;
+				    popeup_out_once=0;
+				    pendrive_check=1;
+				    gucRecordingStatus=0;
+//				    USB_HostDeinit(g_HostHandle);
+				}
+				if(pendrive_detected_timeout==1)
+				{
+					pendrive_detected_timeout=0;
+					guiPendriveStatus=0;
+					gucCopyStatus=0;
+					usb_attached=0;
+					data_copied=0;
+				    Copyrawdataptr=0;
+				    Copyfaultdataptr=0;
+				    bStartRawFrameUsb=0;
+				    bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+				    bStartMinMaxFrameLog=0;
+				    CopyMinMaxdataptr=0;
+#else
+				    bStartDataLogging=0;
+				    CopyDataloggingdataptr=0;
+#endif
+				    popeup_out_once=0;
+				    pendrive_check=1;
+				    gucRecordingStatus=0;
+//				    USB_HostDeinit(g_HostHandle);
+				}
+			}
+		}
+
+		if(pendrive_check==0 && data_copied==0)
+		{
+//			if(giScreenSwitch==20 || giScreenSwitch==21 || giScreenSwitch==22)
+//			{
+				 USB_HostTaskFn(g_HostHandle);
+				 USB_HostMsdTask(&g_MsdFatfsInstance);
+				 usb_written = 1;
+				 usb_attached=0;
+
+				if(pendrive_removed==1)
+				{
+					pendrive_removed=0;
+					guiPendrivePoPup=1;
+					gucCopyStatus=0;
+					usb_attached=0;
+					data_copied=0;
+					Copyrawdataptr=0;
+					Copyfaultdataptr=0;
+					bStartRawFrameUsb=0;
+					bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+					bStartMinMaxFrameLog=0;
+					CopyMinMaxdataptr=0;
+#else
+					bStartDataLogging=0;
+					CopyDataloggingdataptr=0;
+#endif
+					guiPendriveStatus=3;
+					pendrivestatusstrttimer=1;
+					popeup_out_once=0;
+					pendrive_check=2;
+					gucRecordingStatus=0;
+//					USB_HostDeinit(g_HostHandle);
+				}
+//			}
+/*			else
+			{
+				usb_attached=0;
+				data_copied=0;
+				Copyrawdataptr=0;
+				Copyfaultdataptr=0;
+				bStartRawFrameUsb=0;
+				bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+				bStartMinMaxFrameLog=0;
+				CopyMinMaxdataptr=0;
+#else
+				bStartDataLogging=0;
+				CopyDataloggingdataptr=0;
+#endif
+				pendrive_check=2;
+				popeup_out_once=0;
+			}*/
+		}
+#endif
+	}
+    return 0;
+}

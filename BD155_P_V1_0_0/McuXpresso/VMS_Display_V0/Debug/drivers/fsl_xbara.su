@@ -1,0 +1,11 @@
+../drivers/fsl_common_arm.h:210:20:_SDK_AtomicLocalClearAndSet4Byte	4	static
+../drivers/fsl_clock.h:1186:20:CLOCK_ControlGate	8	static
+../drivers/fsl_clock.h:1203:20:CLOCK_EnableClock	8	static
+../drivers/fsl_clock.h:1213:20:CLOCK_DisableClock	8	static
+../drivers/fsl_xbara.c:57:17:XBARA_GetInstance	8	static
+../drivers/fsl_xbara.c:82:6:XBARA_Init	8	static
+../drivers/fsl_xbara.c:97:6:XBARA_Deinit	8	static
+../drivers/fsl_xbara.c:121:6:XBARA_SetSignalsConnection	8	static
+../drivers/fsl_xbara.c:148:10:XBARA_GetStatusFlags	0	static
+../drivers/fsl_xbara.c:165:6:XBARA_ClearStatusFlags	4	static
+../drivers/fsl_xbara.c:206:6:XBARA_SetOutputSignalConfig	16	static

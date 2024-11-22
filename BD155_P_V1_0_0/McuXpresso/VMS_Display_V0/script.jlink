@@ -1,0 +1,7 @@
+ExitOnError 1
+r
+h
+loadfile "C:\Users\EME01-L-26\Desktop\Akshay\McuXpresso\VMS_Display_V0\Debug\VMS_Display_V0.hex"
+qc
+
+qc

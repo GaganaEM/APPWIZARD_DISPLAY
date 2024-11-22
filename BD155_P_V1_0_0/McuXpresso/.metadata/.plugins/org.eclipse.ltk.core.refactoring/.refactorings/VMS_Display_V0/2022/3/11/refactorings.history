@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;VMS_Display_V0/emwin/emWin_library/MCUXpresso/libGUI.a&apos; to &apos;libemWin_M7.a&apos;" description="Rename resource &apos;libGUI.a&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="emwin/emWin_library/MCUXpresso/libGUI.a" name="libemWin_M7.a" stamp="1646738202681" updateReferences="false"/>
+</session>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?debugstack-directory version="1.0"?>
+<directory xmlns:xi="http://www.w3.org/2001/XInclude">
+   <xi:include href="file:/D:/Gagana/VMS_HMI_TEST_SOFTWARE_DEVLOPMENT/20240403/VMS_HMI_DISPLAY_SW/BD155_P_V1_0_0/McuXpresso/.mcuxpressoide_packages_support/MIMXRT1052xxxxB_support/MIMXRT1050_dir_part.xml"/>
+</directory>

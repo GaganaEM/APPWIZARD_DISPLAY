@@ -1,0 +1,365 @@
+                
+                
+                
+                
+                
+                
+Booting.....
+MAIN MENU
+GAUGE DISPLAY
+DIAGNOSTICS
+SETTINGS
+UTILITIES
+SYSTEM SETUP
+DATA
+SERVICE
+REMAINDER
+PASSWORD
+IDENTIFICATION
+RAW CAN DATA
+MIN MAX
+LOGGING
+FAULT LOGGING
+SYSTEM SETUP DATA
+ADJUSTMENT HOURS
+Hrs
+IO MODULE HOURS
+DISPLAY HOURS
+ENGINE HOURS
+:
+DATE
+TIME
+AM
+PM
+Diagnostic Message
+of
+Device Id
+SPN
+FMI
+Address
+Hydraulic Brake Pressure Low
+INTERNAL
+EXTERNAL
+REVERSE
+ODO(Km)
+Day/Night
+Home
+Recall
+%
+PLEASE ENTER THE PASSWORD
+1
+2
+3
+4
+5
+6
+7
+8
+EXIT
+OK
+VALUE
+CONTROL
+FILTER
+BEML IO MODULE
+AI1-ENGINE OIL PRESSURE
+raw
+mA
+ohm
+V
+SET | F/B
+ENGINE OIL PRES.
+ENGINE CLNT.TEMP
+BRAKE OIL PRES.
+ENGINE SPEED
+VEHICLE SPEED
+TRANS.OIL PRES.
+TRANS.OIL TEMP
+TRANS.OP.SH.SPEED
+TRANS.CUR.GEAR
+FUEL LEVEL
+79.79.0175 V008
+BEML V003
+ENGINE OIL TEMP
+Km/hr
+BAR
+RPM
+C
+111324963458
+USER
+SYSTEM
+PLEASE ENTER A NEW PASSWORD
+BACK
+MIN MAX LOGGING
+*Clear Stored
+Codes (DM3)
+Start Logging
+*Stop Logging
+Copy to USB
+Drive
+Clear Data
+Log
+DATE(DD/MM/YYYY)
+TIME(HH:MM:SS)
+LOGGING....
+IDLE
+COPY
+READ
+ID
+RECORD STATUS
+TRANSFER STATUS
+LOG FILE SIZE
+/
+0
+RAW CAN LOGGING
+Start Raw
+CAN Log
+SEC
+PV780
+DI1-LEFT TURN
+DI2-RIGHT TURN
+DI3-HIGH BEAM
+DI4-PREHEAT
+DI5-TRS.CL.FIL.CLG
+DI6-RET. BRAKE
+DI7-REVERSE
+DI11-PARK BRAKE
+DI12-BODY UP
+DI13-HYD.LOWPRES.
+DI14-AIR FIL.CLOG
+DI16-HY.OIL.FIL.CLG
+DI17-COOLENT LVL
+DI20-DUMP BRAKE
+DI21-ACC.PRESSURE
+DI23-TRANS.FIL.CLG
+DI25-ST.LBE.PRE.LW
+DI26-POW/ECOMOD
+DI27-SEAT BELT
+DI35-CHARGE FAIL
+DI7-NA
+DI8-NA
+DI9-NA
+DI10-NA
+VEHICLE AND COMPONENT IDENTIFICATION
+UIN
+MAKE
+MODEL
+SERIAL NO
+UNIT NO
+WARNING:
+                
+SYSTEM SETTINGS
+COMPONENT
+APPLICATION
+OS
+BOOTLOADER
+CONFIGURATION
+VERSION
+2.8.10511
+2.8.10870
+2.8.10789
+2.8.10813
+J1939 SOURCE ADDRESS
+J1939 SIMULATION
+FAULT CONVERSION
+CAN DATA
+FAULT CODE DM1
+FAULT CODE DM2
+J1939-V1
+242
+A
+B
+SOURCE
+PLUG
+SPN
+FMI
+COUNT
+STATUS
+DESCRIPTION
+CORRECTION
+REQUESTING
+TIMEOUT
+RETRY
+SERVICE REMINDER
+CHANGE ENGINE OIL
+CHANGE AIR FILTERS
+CHANGE HYDRAULIC OIL
+SERVICE ENGINE
+SERVICE MACHINE
+TOTAL ENGINE HOURS
+INTERVAL
+NEXT
+REMAINING
+USER SETTINGS
+AMBIENT LIGHT
+BRIGHTNESS
+DAY
+NIGHT
+(24Hr FORMAT)
+RECORDING....
+COMPLETE
+COPYING...
+REQUESTING
+IO
+TCM
+ECU
+CANPORT0
+CANPORT1
+CANPORT2
+NOT RUNNING
+RUNNING
+                
+Next 
+Previous
+Requesting Stored Diagnostics...
+Receiving...
+INVALID PASSWORD !
+You're ready to discard your changes!!
+Press the Enter key to restore or Press the Menu key to cancel 
+Detecting Pendrive...
+Pendrive Detected.
+Pendrive Not Detected.
+Pendrive Detached.
+SD Card Detached.
+SD Card Attached.
+SD Card Detached, Data Un-available
+SD Card Detached, Unable to store data
+Data Un-available in memory
+DATA LOGGING
+ErrPickUp1
+ErrPickUp2
+ErrOverSpeed
+ErrSetp1Ext
+ErrSetp2Ext
+ErrBoostPressure
+ErrOilPressure
+ErrAmbientPressure
+ErrCoolantTemp
+ErrOilTemp
+ErrAlternator
+ErrOilPressWarn
+ErrOilPressEcy
+ErrCoolantTempWarn
+ErrOilTempWarn
+ErrCoolantTempEcy
+ErrAlternatorWarn
+ErrFailedToStart
+ErrPECommonAlarm
+ErrFeedback
+ErrActuatorDiff
+ErrFeedbackRef
+ErrFeedbackAdjust
+ErrAmplifier
+ErrSAEJ1939CanBus
+ErrSAEJ1939Comm
+ErrHZMCanBus
+ErrHZMCanComm
+ErrPEFatalError
+ErrParamStore
+ErrProgramTest
+ErrRAMTest
+ErrDigitalOut
+ErrPowerSupply
+ErrSupply7.5V
+ErrPowerSupplyEDCFb
+Err5VSensorSupply1
+Err5VSensorSupply2
+Err5VSensorSupply3
+Err5VSensorSupply4
+ErrInternTemp1
+ErrInternTemp2
+ErrData
+ErrConfiguration
+ErrStack
+ErrIntern
+Fuel level is Low
+Fuel level sensor is Open
+Transmission oil pressure is low
+Transmission oil pressure is high
+Transmission oil pressure sensor Input is below normal, or shorted to low
+Transmission oil pressure sensor Input  is above normal, or shorted to high
+Converter oil temperature is high
+Converter Oil Temperature Sensor Open Circuit
+Converter Oil Temperature Sensor Short Circuit
+Radiator water level is low
+Parking brake is ON
+Engine oil filter is clogged
+Air Filter Clogged
+Hydraulic  Oil Temperature Sensor Open Circuit
+Hydraulic Oil Temperature Sensor Short Circuit
+Hydraulic Oil Level Low
+SenderCAN is Disconnected
+VMS
+Data cleared from memory
+.
+STORING....
+ON
+OFF
+NUMBER OF RECORDS
+! USE ONLY NUMERICALS !
+Screen
+On/Off
+1. Speedometer
+2. Transmission
+3. Digital_IO
+4. Analog_IO
+5. Engine_RPM
+(12Hr FORMAT)
+BRIGHTNESS:
+ENGINE FUEL RATE
+SHIFT WISE
+L/hr
+CLOCK
+WORKING HOURS
+WELCOME!
+DOZER P-VERSION
+-
++
+60
+START
+STOP
+SHIFT
+ENTER
+DATA SAVED
+SAVE
+OVERSPEED
+IDENTIFICATION NOT SET!
+ACTIVE
+INACTIVE
+Error in Entered Shift Timings
+Transmission oil temperature is above normal
+Transmission Oil Pressure is Above Normal
+Transmission Oil Pressure is below Normal
+Engine oil pressure below normal
+Engine is over speed
+Transmission Oil Filter Clogged
+Low engine coolant level
+Electrical Battery Potential out of Range
+Engine water temperature above normal
+Engine Oil temperature above normal
+Fuel level is low
+Engine Oil Filter Clogged
+Fuel Level sensor open circuit
+Engine oil pressure Sensor malfunction
+Engine oil pressure voltage is above normal, or shorted to high
+Engine oil pressure voltage is below normal, or shorted to low
+Engine coolant temperature voltage is above normal, or shorted to high
+Engine coolant temperature voltage is below normal, or shorted to low
+Engine Oil Temperature is Open Circuit
+Engine Oil Temperature is Short Circuit
+Converter Oil Temperature is Open Circuit
+Converter Oil Temperature is Short Circuit
+Transmission oil pressure Sensor malfunction
+Transmission oil pressure voltage is above normal, or shorted to high
+Transmission oil pressure voltage is below normal, or shorted to low
+SenderCAN is Disconnected
+EDIT
+DO NOT USE THESE SPECIAL CHARACTERS \ / : * ? < > |
+You're ready to reset your changes!!
+ADJUSTED
+RESET
+ENABLE
+DISABLE
+CALCULATED
+HOURS
+NOTE:
+The above "ENGINE HOURS" is calculated INTERNAL to the Display. To be used for MECHANICAL Engines ONLY.

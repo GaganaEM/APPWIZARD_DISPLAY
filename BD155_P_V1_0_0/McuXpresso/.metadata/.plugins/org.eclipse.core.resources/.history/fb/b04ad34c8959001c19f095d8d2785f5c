@@ -1,0 +1,493 @@
+#include "sourceApplication.h"
+
+void funcProcessAnalogInput(void)
+{
+	GuageEop.CurrentValue   = (gfEop * 1500) / 10;
+	GuageEop.CurrentValue	= -GuageEop.CurrentValue;
+	GuageEop = funcGaugeMovement(GuageEop);
+	// temp - to test
+	GuageEct.CurrentValue   = (gfEct - 40) * (2000 / 100);
+	GuageEct.CurrentValue	= -GuageEct.CurrentValue;
+	GuageEct = funcGaugeMovement(GuageEct);
+
+	GuageKmph.CurrentValue  = (giVehicleSpeed * 2520) / 140;
+	GuageKmph.CurrentValue	= -GuageKmph.CurrentValue;
+	GuageKmph = funcGaugeMovement(GuageKmph);
+
+	GuageRpm.CurrentValue	= (giEngineRpm * 2520) / 3000;
+	GuageRpm.CurrentValue	= -GuageRpm.CurrentValue;
+	GuageRpm = funcGaugeMovement(GuageRpm);
+
+	GuageFuel.CurrentValue   = (gfFuel) * (2000 / 100);
+	GuageFuel.CurrentValue = -(3600 - GuageFuel.CurrentValue);
+	GuageFuel = funcGaugeMovement(GuageFuel);
+
+	GuageVolt.CurrentValue   = ((gfVolt*10) - 80) * (1680 / 240);
+	GuageVolt.CurrentValue = -(3600 - GuageVolt.CurrentValue);
+	GuageVolt = funcGaugeMovement(GuageVolt);
+
+	GuageTop.CurrentValue   = -(gfTop * 2800 / 28);
+	GuageTop = funcGaugeMovement(GuageTop);
+
+	GuageTot.CurrentValue   = -((gfTot-40) * 2800 / 100);
+	GuageTot = funcGaugeMovement(GuageTot);
+
+	GuageBot.CurrentValue   = -((gfBot-40) * 2800 / 100);
+	GuageBot = funcGaugeMovement(GuageBot);
+
+	GuageVolt2.CurrentValue = -(((gfVolt*10)-160) * 2800 / 160);
+	GuageVolt2 = funcGaugeMovement(GuageVolt2);
+
+	GuageEot.CurrentValue   = -((gfEot-40) * 2800 / 100);
+	GuageEot = funcGaugeMovement(GuageEot);
+}
+
+void funcProcessDigitalInput(void)
+{
+	giIcon17 = 1;
+	giIcon18 = giCurrentGear;
+	if(gfEcl < 10)
+	{
+		giIcon03 = 2;
+	}
+	else
+	{
+		giIcon03 = 1;
+	}
+	if(gfFuel < 10)
+	{
+		giIcon06 = 2;
+	}
+	else if(gfFuel > 12)
+	{
+		giIcon06 = 1;
+	}
+//	//D1 Left - D1
+//	giIcon01 = ((gulDigitalInputFrame1 >> 2) & 0x03);
+//	//D2 Right - D2
+//	giIcon14 = ((gulDigitalInputFrame1 >> 6) & 0x03);
+//	//D3 High Beam - D3
+//	giIcon07 = ((gulDigitalInputFrame1 >> 10) & 0x03);
+//	//D4 Pre-heater - D4
+//	giIcon09 = ((gulDigitalInputFrame1 >> 14) & 0x03);
+//	//D5 Diff-Lock - D5 Trns CFG
+//	giIcon05 = ((gulDigitalInputFrame1 >> 18) & 0x03);
+//	//D6 Lift arm lock - D6 RET Brk
+//	giIcon04 = ((gulDigitalInputFrame1 >> 22) & 0x03);
+//	//D7 Reverse - D7
+//	giIcon17 = ((gulDigitalInputFrame1 >> 26) & 0x03);
+//	//D9 Spare Close To GN - D11 PARK BRK
+//	giIcon10 = ((gulDigitalInputFrame1 >> 34) & 0x03);
+//	//D16 HOFC - D16
+//	giIcon02 = ((gulDigitalInputFrame1 >> 62) & 0x03);
+//	//D17 Coolant Level - D12 BODY UP
+//	giIcon12 = ((gulDigitalInputFrame2 >> 2) & 0x03);
+//	//D18 HOLL - DUMP BRAKE
+//	giIcon11 = ((gulDigitalInputFrame2 >> 6) & 0x03);
+//	//D21 Acc Pressure - D21
+//
+//	//D22 EOL - D27 SEAT BELT
+//	giIcon08 = ((gulDigitalInputFrame2 >> 22) & 0x03);
+//	//D23 TOFC - D23
+//	giIcon05 = ((gulDigitalInputFrame2 >> 26) & 0x03);
+//	//D29 FDOT - D25 SLFL Retarder / Mode
+//	giIcon13 = ((gulDigitalInputFrame2 >> 50) & 0x03);
+//	//D35 Charge Alt - D35
+//	giIcon15 = ((gulDigitalInputFrame2 >> 62) & 0x03);
+
+//	giIcon01 = (giIcon01 == 1 && (bToggleIcon01 == 1 || bToggleBit == 1))? 2 : 1;
+//	giIcon02 = (giIcon02 == 1 && (bToggleIcon02 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon03 = (giIcon03 == 1 && (bToggleIcon03 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon04 = (giIcon04 == 1 && (bToggleIcon04 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon05 = (giIcon05 == 1 && (bToggleIcon05 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon06 = (giIcon06 == 1 && (bToggleIcon06 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon07 = (giIcon07 == 1 && (bToggleIcon07 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon08 = (giIcon08 == 1 && (bToggleIcon08 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon09 = (giIcon09 == 1 && (bToggleIcon09 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon10 = (giIcon10 == 1 && (bToggleIcon10 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon11 = (giIcon11 == 1 && (bToggleIcon11 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon12 = (giIcon12 == 1 && (bToggleIcon12 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon13 = (giIcon13 == 1 && (bToggleIcon13 == 0 || bToggleBit == 1))? 2 : 1;
+//	giIcon14 = (giIcon14 == 1 && (bToggleIcon14 == 1 || bToggleBit == 1))? 2 : 1;
+//	giIcon15 = (giIcon15 == 1 && (bToggleIcon15 == 0 || bToggleBit == 1))? 2 : 1;
+//
+//	giIcon16 = (giIcon16 == 1 && (bToggleIcon16 == 0 || bToggleBit == 1))? 1 : 0;
+//	giIcon17 = 1;
+////	giIcon17 = (giIcon17 == 1 && (bToggleIcon17 == 0 || bToggleBit == 1))? 1 : 0;
+//	giIconRevCol = (giIconRevCol == 1 && (bToggleIcon17 == 0 || bToggleBit == 1))? 1 : 0;
+//
+//	giIcon18 = giCurrentGear;
+}
+
+void funcDm1ScreenScroll(void)
+{
+	unsigned char lucTotalLog 	 = 0;
+	unsigned char lucDm1FaultPtr = 0;
+	//unsigned char lucAddress	 = 0;
+	unsigned char lucFault		 = 0;
+	unsigned long lulTempSpnFmi	 = 0;
+
+	lucTotalLog = gucFaultLogs[2] + gucFaultLogs[1] + gucFaultLogs[0];
+
+	if(lucTotalLog >= 1)
+	{
+		giIcon16 = 1;
+		gucFaultsActive = 1;
+	}
+	else
+	{
+		giIcon16 = 0;
+		gucFaultsActive = 0;
+	}
+
+	if(bDm1FaultPtr == 1)
+	{
+		bDm1FaultPtr = 0;
+
+//		if(gucDm1FaultPtr == 0)
+//		{
+//			lucAddress = 0;
+//			while(gucFaultLogs[lucAddress] == 0)
+//			{
+//				lucAddress++;
+//				if(lucAddress > 2)
+//				{
+//					lucAddress = 0;
+//					lucFault = 0;
+//					gucDm1FaultPtr = 0;
+//				}
+//			}
+//		}
+//		else
+//		{
+//			if(gucDm1FaultPtr >= gucFaultLogs[lucAddress])
+//			{
+//				lucAddress++;
+//				while(gucFaultLogs[lucAddress] == 0)
+//				{
+//					lucAddress++;
+//					if(lucAddress > 2)
+//					{
+//						lucAddress = 0;
+//						lucFault = 0;
+//						gucDm1FaultPtr = 0;
+////						lucAddress 	   = 0;
+////						gucDm1FaultPtr = 0;
+////						lucFault 	   = 0;
+//						giDMPopUp	   = 0;
+////						memset(&gucFaultLogs,0,sizeof(gucFaultLogs));
+////						memset(&strDM1Log,0,sizeof(strDM1Log));
+////						memset(&strDm1Screen,0,sizeof(strDm1Screen));
+//						break;
+//					}
+//				}
+//			}
+//			else
+//			{
+//
+//			}
+//		}
+
+		if(gucDm1FaultPtr < gucFaultLogs[lucAddress])
+		{
+
+//			lucAddress 	   = 0;
+//			gucDm1FaultPtr = 0;
+//			lucFault 	   = 0;
+//			giDMPopUp	   = 0;
+//			memset(&gucFaultLogs,0,sizeof(gucFaultLogs));
+//			memset(&strDM1Log,0,sizeof(strDM1Log));
+//			memset(&strDm1Screen,0,sizeof(strDm1Screen));
+		}
+		else
+		{
+			do
+			{
+				lucAddress++;
+				lucFault = 0;
+				gucDm1FaultPtr = 0;
+				if(lucAddress > 2)
+				{
+					lucAddress = 0;
+					gucDm1FaultPtr = 0;
+					lucFault = 0;
+					giDMPopUp	   = 0;
+					gucCnt 	= 0;
+//					memset(&gucFaultLogs,0,sizeof(gucFaultLogs));
+//					memset(&strDM1Log,0,sizeof(strDM1Log));
+//					memset(&strDm1Screen,0,sizeof(strDm1Screen));
+					break;
+				}
+			}
+			while(gucFaultLogs[lucAddress] == 0);
+		}
+
+
+		if(giDMPopUp == 1)
+		{
+
+			lucFault = gucDm1FaultPtr++;
+			strDm1Screen.MaximumCount 	= lucTotalLog;
+
+			gucCnt++;
+			if(gucCnt > lucTotalLog)
+			{
+				gucCnt = 1;
+			}
+
+			strDm1Screen.CurrentCount 	= gucCnt;//gucDm1FaultPtr;
+			strDm1Screen.DeviceId		= 1;
+			lulTempSpnFmi 				= strDM1Log[lucAddress][lucFault].SpnFmi;
+			strDm1Screen.SPN 			= lulTempSpnFmi & 0x7FFFF;
+			strDm1Screen.FMI 			= lulTempSpnFmi >> 19;
+			strDm1Screen.OccCount		= strDM1Log[lucAddress][lucFault].OccuranceCount;
+			strDm1Screen.Address		= strDM1Log[lucAddress][lucFault].SourceAddress;
+			strDm1Screen.Status			= strDM1Log[lucAddress][lucFault].Status;
+
+			if(strDm1Screen.Address==TRANSMISSION_ECU)
+			{
+				strDm1Screen.Address=3;
+			}
+
+			strDm1Screen.Message = funcDM1MessageSelection(strDm1Screen.SPN,strDm1Screen.FMI);
+
+//			switch(lulTempSpnFmi)
+//			{
+//				case 0xFCDEB :
+//							strDm1Screen.Message = 1;
+//							break;
+//				default :
+//							strDm1Screen.Message = 2;
+//							break;
+//			}
+		}
+	}
+}
+
+struct GuageIndicator funcGaugeMovement(struct GuageIndicator GuageValue)
+{
+	int16 liPeriodicValue;
+	int16 liStepSize		 = 10;
+
+	if(GuageValue.CurrentValue > GuageValue.PreviousValue)
+	{
+		liPeriodicValue = (GuageValue.CurrentValue - GuageValue.PreviousValue) / liStepSize;
+		if((GuageValue.CurrentValue - GuageValue.PreviousValue) < liStepSize)
+		{
+			GuageValue.PreviousValue = GuageValue.CurrentValue;
+		}
+	}
+	else
+	{
+		liPeriodicValue = (GuageValue.PreviousValue - GuageValue.CurrentValue) / liStepSize;
+		if((GuageValue.PreviousValue - GuageValue.CurrentValue) < liStepSize)
+		{
+			GuageValue.PreviousValue = GuageValue.CurrentValue;
+		}
+	}
+
+	if(GuageValue.PreviousValue < GuageValue.CurrentValue)
+	{
+
+		GuageValue.PreviousValue = GuageValue.PreviousValue + liPeriodicValue;
+		if(GuageValue.PreviousValue > GuageValue.CurrentValue)
+		{
+			GuageValue.PreviousValue = GuageValue.CurrentValue;
+		}
+
+	}
+	else if(GuageValue.PreviousValue > GuageValue.CurrentValue)
+	{
+		GuageValue.PreviousValue = GuageValue.PreviousValue - liPeriodicValue;
+		if(GuageValue.PreviousValue < GuageValue.CurrentValue)
+		{
+			GuageValue.PreviousValue = GuageValue.CurrentValue;
+		}
+	}
+	else
+	{}
+
+	return(GuageValue);
+}
+
+uint8_t funcDM1MessageSelection(Uint32 lulspn,Uint8 lucfmi)
+{
+	uint8_t lucDm1Message=0;
+
+    if(lulspn==96)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=1;
+	   }
+	   else if(lucfmi==18)
+	   {
+		   lucDm1Message=2;
+	   }
+	}
+	else if(lulspn==100)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=3;
+	   }
+	   else if(lucfmi==18)
+	   {
+		   lucDm1Message=4;
+	   }
+	}
+	else if(lulspn==107)
+	{
+	   if(lucfmi==18)
+	   {
+		   lucDm1Message=5;
+	   }
+	}
+	else if(lulspn==110)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=6;
+	   }
+	   else if(lucfmi==4)
+	   {
+		   lucDm1Message=7;
+	   }
+	   else if(lucfmi==16)
+	   {
+		   lucDm1Message=8;
+	   }
+	}
+	else if(lulspn==120)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=9;
+	   }
+	   else if(lucfmi==4)
+	   {
+		   lucDm1Message=10;
+	   }
+	   else if(lucfmi==16)
+	   {
+		   lucDm1Message=11;
+	   }
+	}
+	else if(lulspn==127)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=12;
+	   }
+	   else if(lucfmi==18)
+	   {
+		   lucDm1Message=13;
+	   }
+	}
+	else if(lulspn==175)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=14;
+	   }
+	   else if(lucfmi==4)
+	   {
+		   lucDm1Message=15;
+	   }
+	   else if(lucfmi==16)
+	   {
+		   lucDm1Message=16;
+	   }
+	}
+	else if(lulspn==190)
+	{
+	   if(lucfmi==0)
+	   {
+		   lucDm1Message=17;
+	   }
+	   else if(lucfmi==3)
+	   {
+		   lucDm1Message=18;
+	   }
+	}
+	else if(lulspn==702)
+	{
+	   if(lucfmi==16)
+	   {
+		   lucDm1Message=19;
+	   }
+	}
+	else if(lulspn==2584)
+	{
+	   if(lucfmi==18)
+	   {
+		   lucDm1Message=20;
+	   }
+	}
+	else if(lulspn==2585)
+	{
+	   if(lucfmi==18)
+	   {
+		   lucDm1Message=21;
+	   }
+	}
+	else if(lulspn==2614)
+	{
+	   if(lucfmi==16)
+	   {
+		   lucDm1Message=22;
+	   }
+	}
+	else if(lulspn==3353)
+	{
+	   if(lucfmi==18)
+	   {
+		   lucDm1Message=23;
+	   }
+	}
+	else if(lulspn==521019)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=24;
+	   }
+	   else if(lucfmi==13)
+	   {
+		   lucDm1Message=25;
+	   }
+    }
+
+	if(lulspn==100)
+	{
+//	   if(lucfmi==3)
+//	   {
+//		   lucDm1Message=26;
+//	   }
+	   if(lucfmi==4)
+	   {
+		   lucDm1Message=27;
+	   }
+//	   else if(lucfmi==18)
+//	   {
+//		   lucDm1Message=28;
+//	   }
+	}
+	else if(lulspn==110)
+	{
+	   if(lucfmi==3)
+	   {
+		   lucDm1Message=29;
+	   }
+	   else if(lucfmi==16)
+	   {
+		   lucDm1Message=30;
+	   }
+	   else if(lucfmi==4)
+	   {
+		   lucDm1Message=31;
+	   }
+	}
+
+	return lucDm1Message;
+}
+

@@ -1,0 +1,15 @@
+../usb/host/class/usb_host_hub.c:81:13:USB_HostHubControlCallback	16	static
+../usb/host/class/usb_host_hub.c:97:13:USB_HostHubInPipeCallback	16	static
+../usb/host/class/usb_host_hub.c:110:13:USB_HostHubResetCallback	8	static
+../usb/host/class/usb_host_hub.c:118:21:USB_HostHubClassRequestCommon	32	static
+../usb/host/class/usb_host_hub.c:173:14:USB_HostHubInit	32	static
+../usb/host/class/usb_host_hub.c:209:14:USB_HostHubSetInterface	48	static
+../usb/host/class/usb_host_hub.c:308:14:USB_HostHubDeinit	16	static
+../usb/host/class/usb_host_hub.c:365:14:USB_HostHubInterruptRecv	32	static
+../usb/host/class/usb_host_hub.c:411:14:USB_HostHubSendPortReset	24	static
+../usb/host/class/usb_host_hub.c:471:14:USB_HostHubGetDescriptor	32	static
+../usb/host/class/usb_host_hub.c:499:14:USB_HostHubClearFeature	32	static
+../usb/host/class/usb_host_hub.c:526:14:USB_HostHubGetStatus	32	static
+../usb/host/class/usb_host_hub.c:554:14:USB_HostHubSetPortFeature	32	static
+../usb/host/class/usb_host_hub.c:582:14:USB_HostHubClearPortFeature	32	static
+../usb/host/class/usb_host_hub.c:610:14:USB_HostHubGetPortStatus	32	static

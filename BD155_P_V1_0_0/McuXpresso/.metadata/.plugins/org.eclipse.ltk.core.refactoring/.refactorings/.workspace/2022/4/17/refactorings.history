@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;evkbimxrt1050_gpt_timer&apos;" deleteContents="true" description="Delete resource &apos;evkbimxrt1050_gpt_timer&apos;" element1="/evkbimxrt1050_gpt_timer" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1650717959357"/>&#x0A;<refactoring comment="Delete resource &apos;evkbimxrt1050_host_msd_fatfs_bm&apos;" deleteContents="true" description="Delete resource &apos;evkbimxrt1050_host_msd_fatfs_bm&apos;" element1="/evkbimxrt1050_host_msd_fatfs_bm" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1650717971271"/>
+</session>

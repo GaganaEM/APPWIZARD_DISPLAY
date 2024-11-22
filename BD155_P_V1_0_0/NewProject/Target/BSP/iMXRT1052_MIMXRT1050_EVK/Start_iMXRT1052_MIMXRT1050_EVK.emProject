@@ -1,0 +1,313 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="Start_iMXRT1052_MIMXRT1050_EVK" target="8" version="2">
+  <project Name="Start_iMXRT1052_MIMXRT1050_EVK">
+    <configuration
+      Name="Common"
+      Target="MCIMXRT1052"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M7"
+      arm_endian="Little"
+      arm_fp_abi="SoftFP"
+      arm_fpu_type="FPv5-D16"
+      arm_linker_allow_multiple_definition="No"
+      arm_linker_heap_size="256"
+      arm_linker_indirect_file="Yes"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="1024"
+      arm_target_device_name="MCIMXRT1052"
+      arm_target_interface_type="SWD"
+      batch_build_configurations="Src_Debug;Src_Release"
+      build_intermediate_directory="Output/SES/$(ProjectName)_$(Configuration)/Obj"
+      build_output_directory="Output/SES/$(Configuration)/Exe"
+      c_additional_options="-Wall;-Wextra;-Wunused-variable;-Wuninitialized;-Wmissing-field-initializers;-Wundef;-ffunction-sections;-fdata-sections"
+      c_only_additional_options="-Wmissing-prototypes"
+      c_preprocessor_definitions="ARM_MATH_CM7=1;CPU_MIMXRT1052DVL6A=1;IP_SUPPORT_IPV6=1;MIMXRT1052xxxxx=1;USE_RTT=1;USE_SYSVIEW=1;__MIMXRT1052_FAMILY=1"
+      c_user_include_directories="../../Config;../../Inc;../../SEGGER;../../Shared/SEGGER/Sample/OS;Setup;Setup/Board;Setup/fsl_driver;Setup_SES/CoreSupport;Setup_SES/DeviceSupport;../../Shared/OS/embOS/CortexM_SES"
+      debug_register_definition_file="Setup_SES/MIMXRT1052_Registers.xml"
+      debug_target_connection="J-Link"
+      debug_threads_script="../../Shared/OS/embOS/CortexM_SES/embOSPluginSES.js"
+      gcc_enable_all_warnings="Yes"
+      gcc_entry_point="Reset_Handler"
+      linker_memory_map_file="Setup_SES/MIMXRT1052xxxxx_MemoryMap.xml"
+      linker_output_format="srec"
+      linker_section_placement_file="Setup_SES/flash_placement.xml"
+      macros="Target=MCIMXRT1052"
+      project_directory=""
+      project_type="Executable" />
+    <folder Name="System Files">
+      <file file_name="Setup_SES/flash_placement.xml" />
+      <file file_name="Setup_SES/MIMXRT1052xxxxx_MemoryMap.xml" />
+    </folder>
+    <folder Name="Application">
+      <folder
+        Name="Source"
+        exclude=""
+        filter=""
+        path="../../../Source"
+        recurse="Yes" />
+      <folder
+        Name="Resource"
+        exclude=""
+        filter=""
+        path="../../../Resource"
+        recurse="Yes" />
+    </folder>
+    <folder Name="BSP">
+      <folder Name="iMXRT1052_MIMXRT1050_EVK">
+        <folder Name="Setup">
+          <file file_name="Setup/BSP.c" />
+          <file file_name="Setup/BSP_FS.c" />
+          <file file_name="Setup/BSP_IP.c" />
+          <file file_name="Setup/BSP_USB.c" />
+          <file file_name="Setup/GUIConf.c" />
+          <file file_name="Setup/GUIConf.h" />
+          <file file_name="Setup/LCDConf.c" />
+          <file file_name="Setup/LCDConf.h" />
+          <file file_name="Setup/PIDConf.c" />
+          <file file_name="Setup/PIDConf.h" />
+          <folder Name="Board">
+            <file file_name="Setup/Board/fsl_ft5406_rt.c" />
+            <file file_name="Setup/Board/fsl_ft5406_rt.h" />
+          </folder>
+          <folder Name="fsl_driver">
+            <file file_name="Setup/fsl_driver/fsl_clock.c" />
+            <file file_name="Setup/fsl_driver/fsl_common.c" />
+            <file file_name="Setup/fsl_driver/fsl_elcdif.c" />
+            <file file_name="Setup/fsl_driver/fsl_elcdif.h" />
+            <file file_name="Setup/fsl_driver/fsl_gpio.c" />
+            <file file_name="Setup/fsl_driver/fsl_gpio.h" />
+            <file file_name="Setup/fsl_driver/fsl_iomuxc.h" />
+            <file file_name="Setup/fsl_driver/fsl_lpi2c.c" />
+            <file file_name="Setup/fsl_driver/fsl_lpi2c.h" />
+          </folder>
+        </folder>
+        <folder Name="Setup_SES">
+          <file file_name="Setup_SES/thumb_crt0.s" />
+          <folder Name="CoreSupport">
+            <file file_name="Setup_SES/CoreSupport/cmsis_compiler.h" />
+            <file file_name="Setup_SES/CoreSupport/cmsis_gcc.h" />
+            <file file_name="Setup_SES/CoreSupport/cmsis_version.h" />
+            <file file_name="Setup_SES/CoreSupport/core_cm7.h" />
+            <file file_name="Setup_SES/CoreSupport/mpu_armv7.h" />
+          </folder>
+          <folder Name="DeviceSupport">
+            <file file_name="Setup_SES/DeviceSupport/MIMXRT1052.h" />
+            <file file_name="Setup_SES/DeviceSupport/MIMXRT1052_features.h" />
+            <file file_name="Setup_SES/DeviceSupport/MIMXRT105x_Startup.s" />
+            <file file_name="Setup_SES/DeviceSupport/MIMXRT105x_Vectors.s" />
+            <file file_name="Setup_SES/DeviceSupport/fsl_clock.h" />
+            <file file_name="Setup_SES/DeviceSupport/fsl_common.h" />
+            <file file_name="Setup_SES/DeviceSupport/fsl_device_registers.h" />
+            <file file_name="Setup_SES/DeviceSupport/fsl_flexspi_Hyper_Flash.c">
+              <configuration Name="Src_Debug" build_exclude_from_build="No" />
+            </file>
+            <file file_name="Setup_SES/DeviceSupport/fsl_flexspi_QSPI_Flash.c">
+              <configuration
+                Name="Src_Debug"
+                build_exclude_from_build="Yes" />
+            </file>
+            <file file_name="Setup_SES/DeviceSupport/fsl_flexspi_nor_boot.c" />
+            <file file_name="Setup_SES/DeviceSupport/fsl_flexspi_nor_boot.h" />
+            <file file_name="Setup_SES/DeviceSupport/fsl_flexspi_nor_flash.h" />
+            <file file_name="Setup_SES/DeviceSupport/system_MIMXRT105x.c" />
+            <file file_name="Setup_SES/DeviceSupport/system_MIMXRT105x.h" />
+          </folder>
+        </folder>
+      </folder>
+    </folder>
+    <folder Name="Config">
+      <file file_name="../../Config/Global.h" />
+      <file file_name="../../Config/OS_Config.h" />
+      <file file_name="../../Config/SEGGER_MEM_Conf.h" />
+      <file file_name="../../Config/SEGGER_RTT_Conf.h" />
+      <file file_name="../../Config/SEGGER_SYSVIEW_Conf.h" />
+      <file file_name="../../Config/FS_ConfigIO.c" />
+      <file file_name="../../Config/FS_Conf.h" />
+    </folder>
+    <folder Name="Inc">
+      <file file_name="../../Inc/BSP.h" />
+      <file file_name="../../Inc/BSP_FS.h" />
+      <file file_name="../../Inc/BSP_GPIO.h" />
+      <file file_name="../../Inc/BSP_GUI.h" />
+      <file file_name="../../Inc/BSP_IP.h" />
+      <file file_name="../../Inc/BSP_UART.h" />
+      <file file_name="../../Inc/BSP_USB.h" />
+      <file file_name="../../Inc/JLINKDCC.h" />
+      <file file_name="../../Inc/JLINKMEM.h" />
+      <file file_name="../../Inc/JLINKRX.h" />
+      <file file_name="../../Inc/TaskPrio.h" />
+      <file file_name="../../Inc/UDPCOM.h" />
+    </folder>
+    <folder Name="SEGGER">
+      <file file_name="../../SEGGER/SEGGER.h" />
+      <file file_name="../../SEGGER/SEGGER_CRC.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC.h" />
+      <file file_name="../../SEGGER/SEGGER_CRC_04C11DB7.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_09.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_1021.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_1EDC6F41.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_48.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_82F63B78.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_8408.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_EDB88320.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_MSB.c" />
+      <file file_name="../../SEGGER/SEGGER_CRC_Validate.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM.h" />
+      <file file_name="../../SEGGER/SEGGER_MEM_BUDDY_HEAP.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM_CHUNK_HEAP.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM_ConfDefaults.h" />
+      <file file_name="../../SEGGER/SEGGER_MEM_DUAL_HEAP.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM_SBUFFER.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM_SELFTEST_HEAP.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM_SIMPLE_HEAP.c" />
+      <file file_name="../../SEGGER/SEGGER_MEM_SYSTEM_HEAP.c" />
+      <file file_name="../../SEGGER/SEGGER_RTT.c" />
+      <file file_name="../../SEGGER/SEGGER_RTT.h" />
+      <file file_name="../../SEGGER/SEGGER_RTT_ASM_ARMv7M.S" />
+      <file file_name="../../SEGGER/SEGGER_RTT_printf.c" />
+      <file file_name="../../SEGGER/SEGGER_SHELL.c" />
+      <file file_name="../../SEGGER/SEGGER_SHELL.h" />
+      <file file_name="../../SEGGER/SEGGER_SYSVIEW.c" />
+      <file file_name="../../SEGGER/SEGGER_SYSVIEW.h" />
+      <file file_name="../../SEGGER/SEGGER_SYSVIEW_ConfDefaults.h" />
+      <file file_name="../../SEGGER/SEGGER_SYSVIEW_Int.h" />
+      <file file_name="../../SEGGER/SEGGER_String.c" />
+      <file file_name="../../SEGGER/SEGGER_UTIL.h" />
+      <file file_name="../../SEGGER/SEGGER_VERSION.c" />
+      <file file_name="../../SEGGER/SEGGER_memcpy.c" />
+      <file file_name="../../SEGGER/SEGGER_memxor.c" />
+      <file file_name="../../SEGGER/SEGGER_snprintf.c" />
+      <file file_name="../../SEGGER/SEGGER_snprintf_HTML.c" />
+      <file file_name="../../SEGGER/SEGGER_snprintf_double.c" />
+      <file file_name="../../Shared/SEGGER/Sample/OS/SEGGER_SYSVIEW_embOS.c" />
+      <file file_name="../../Shared/SEGGER/Sample/OS/SEGGER_SYSVIEW_embOS.h" />
+      <folder Name="SYS">
+        <file file_name="../../SEGGER/SYS/SEGGER_SYS.c" />
+        <file file_name="../../SEGGER/SYS/SEGGER_SYS.h" />
+        <file file_name="../../SEGGER/SYS/SEGGER_SYS_IO.c" />
+        <folder Name="Embedded">
+          <file file_name="../../SEGGER/SYS/Embedded/SEGGER_SYS_IO_ConfDefaults.h" />
+          <file file_name="../../SEGGER/SYS/Embedded/SEGGER_SYS_IO_RTT.c" />
+          <file file_name="../../SEGGER/SYS/Embedded/SEGGER_SYS_OS_embOS.c" />
+          <file file_name="../../SEGGER/SYS/Embedded/SEGGER_SYS_embOS.c" />
+        </folder>
+      </folder>
+    </folder>
+    <folder Name="Shared">
+      <folder Name="BSP">
+        <folder Name="iMXRT105x">
+          <folder Name="Setup">
+            <file file_name="../../Shared/BSP/iMXRT105x/RTOSInit_iMXRT105x.c" />
+            <file file_name="../../Shared/BSP/iMXRT105x/SEGGER_SYSVIEW_Config_embOS.c" />
+          </folder>
+        </folder>
+      </folder>
+      <folder Name="GUI">
+        <folder Name="OS">
+          <file file_name="../../Shared/GUI/Sample/OS/GUI_X_embOS.c" />
+        </folder>
+        <folder Name="FS">
+          <file file_name="../../Shared/GUI/Sample/FS/APPW_X_emFile.c" />
+        </folder>
+      </folder>
+      <folder Name="OS">
+        <folder Name="embOS">
+          <file file_name="../../Shared/OS/embOS/JLINKMEM_Process.c" />
+          <file file_name="../../Shared/OS/embOS/Main.c" />
+          <file file_name="../../Shared/OS/embOS/OS_Error.c" />
+          <folder Name="CortexM_SES">
+            <file file_name="../../Shared/OS/embOS/CortexM_SES/RTOS.h" />
+          </folder>
+        </folder>
+      </folder>
+      <folder Name="SEGGER">
+        <folder Name="Sample">
+          <file file_name="../../Shared/SEGGER/Sample/HardFaultHandler.S" />
+          <file file_name="../../Shared/SEGGER/Sample/SEGGER_HardFaultHandler.c" />
+        </folder>
+      </folder>
+      <folder Name="FS">
+        <folder Name="Sample">
+          <folder Name="Driver">
+            <folder Name="MMC_CM">
+              <folder Name="iMXRT1052_NXP_MIMXRT1050_EVK">
+                <file file_name="../../Shared/FS/Sample/Driver/MMC_CM/iMXRT1052_NXP_MIMXRT1050_EVK/FS_ConfigMMC_CardMode_iMXRT1052_NXP_MIMXRT1050_EVK.c" />
+                <file file_name="../../Shared/FS/Sample/Driver/MMC_CM/iMXRT1052_NXP_MIMXRT1050_EVK/FS_MMC_CM_HW_iMXRT1052_NXP_MIMXRT1050_EVK.c" />
+                <file file_name="../../Shared/FS/Sample/Driver/MMC_CM/iMXRT1052_NXP_MIMXRT1050_EVK/FS_MMC_CM_HW_iMXRT1052_NXP_MIMXRT1050_EVK.h" />
+                <folder Name="Excluded">
+                  <file file_name="../../Shared/FS/Sample/Driver/MMC_CM/iMXRT1052_NXP_MIMXRT1050_EVK/FS_ConfigRAMDisk.c">
+                    <configuration
+                      Name="Src_Debug"
+                      build_exclude_from_build="Yes" />
+                    <configuration
+                      Name="Src_Release"
+                      build_exclude_from_build="Yes" />
+                  </file>
+                  <file file_name="../../Shared/FS/Sample/Driver/MMC_CM/iMXRT1052_NXP_MIMXRT1050_EVK/FS_ConfigRAMDisk_23k.c">
+                    <configuration
+                      Name="Src_Debug"
+                      build_exclude_from_build="Yes" />
+                    <configuration
+                      Name="Src_Release"
+                      build_exclude_from_build="Yes" />
+                  </file>
+                  <file file_name="../../Shared/FS/Sample/Driver/MMC_CM/iMXRT1052_NXP_MIMXRT1050_EVK/FS_USBH_MSDConfig.c">
+                    <configuration
+                      Name="Src_Debug"
+                      build_exclude_from_build="Yes" />
+                    <configuration
+                      Name="Src_Release"
+                      build_exclude_from_build="Yes" />
+                  </file>
+                </folder>
+              </folder>
+            </folder>
+          </folder>
+          <folder Name="OS">
+            <file file_name="../../Shared/FS/Sample/OS/FS_X_embOS.c" />
+          </folder>
+        </folder>
+      </folder>
+    </folder>
+    <configuration
+      Name="Src_Debug"
+      c_user_include_directories="../../SEGGER/SYS;../../SEGGER/SYS/Embedded;../../GUI_Lib;../../FS_Lib/CortexM_ES;../../IP" />
+    <configuration
+      Name="Src_Release"
+      c_user_include_directories="../../SEGGER/SYS;../../SEGGER/SYS/Embedded;../../GUI_Lib;../../FS_Lib/CortexM_ES;../../IP" />
+    <folder Name="GUI_Lib">
+      <file file_name="../../GUI_Lib/libGUI.a" />
+    </folder>
+    <folder Name="OS_Lib">
+      <file file_name="../../OS_Lib/embOS/CortexM_SES/libos_v7m_t_vfpv4_le_dp.a">
+        <configuration Name="Src_Release" build_exclude_from_build="Yes" />
+      </file>
+      <file file_name="../../OS_Lib/embOS/CortexM_SES/libos_v7m_t_vfpv4_le_r.a">
+        <configuration Name="Src_Debug" build_exclude_from_build="Yes" />
+      </file>
+    </folder>
+    <folder Name="FS_Lib">
+      <file file_name="../../FS_Lib/CortexM_ES/libFS_v7m_t_vfpv4_le_d.a">
+        <configuration Name="Src_Release" build_exclude_from_build="Yes" />
+      </file>
+      <file file_name="../../FS_Lib/CortexM_ES/libFS_v7m_t_vfpv4_le_r.a">
+        <configuration Name="Src_Debug" build_exclude_from_build="Yes" />
+      </file>
+    </folder>
+  </project>
+  <configuration Name="Src_Debug" inherited_configurations="Debug" />
+  <configuration Name="Src_Release" inherited_configurations="Release" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG"
+    gcc_debugging_level="Level 2"
+    gcc_optimization_level="Level 2"
+    hidden="Yes" />
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+</solution>

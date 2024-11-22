@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="SmartImportWizard">
+		<item key="SmartImportRootWizardPage.STORE_HIDE_ALREADY_OPEN" value="false"/>
+		<item key="SmartImportRootWizardPage.STORE_CLOSE_IMPORTED" value="false"/>
+		<item key="SmartImportRootWizardPage.STORE_NESTED_PROJECTS" value="true"/>
+		<item key="SmartImportRootWizardPage.STORE_CONFIGURE_NATURES" value="true"/>
+		<list key="org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage.knownSources">
+			<item value="C:\Users\EME01-L-26\Desktop\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_emwin_temperature_control"/>
+			<item value="C:\Users\EME01-L-26\Desktop\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_iled_blinky"/>
+			<item value="C:\Users\EME01-L-26\Desktop\Akshay\McuXpresso\evkbimxrt1050_iled_blinky"/>
+			<item value="C:\Users\EME01-L-02D19\Desktop\VMS-Display\McuXpresso\evkbimxrt1050_iled_blinky"/>
+			<item value="C:\Users\EME01-L-02D19\Desktop\BEML Mysore VISIT - 07.09.2021\DEMO\HMI_Display_800x480_MCU11_3_0_5222\evkbimxrt1050_emwin_temperature_control"/>
+			<item value="C:\Users\EME01-L-02D19\Desktop\NXP-i2c\evkbimxrt1050\lpi2c_polling_b2b_master"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea">
+	</section>
+	<section name="ExternalProjectImportWizard">
+	</section>
+	<section name="NewWizardAction">
+	</section>
+</section>

@@ -1,0 +1,213 @@
+#ifndef FILES_HEADER_EXTERNSOURCEVARIABLE_H_
+#define FILES_HEADER_EXTERNSOURCEVARIABLE_H_
+
+#include "../Files_Application/J1939Stack/sourceJ1939StackExternVariable.h"
+#include "../Files_Application/KeypadStack/sourceKeypadStackExternVariable.h"
+//#include "../Files_Application/USB_UserApp_Stack/usb_user_app_extern_variables.h"
+
+extern int 	update_rpm;
+extern int	cnt_rpm;
+
+extern Uint8 gucFaultsActive;
+extern unsigned char TempArray[30000][12];
+
+extern bool bDM1RxComplete;
+extern bool bDm1FaultPtr;
+
+
+extern int del,once,ani_start;
+
+extern unsigned char gucSetPassword[5] ;
+extern unsigned char gucPasswordArray[5]	;
+extern unsigned char gucCursorArray[5] 	;
+extern int giPasswordRetry;
+extern bool bRetryPwdEntry;
+extern unsigned char gucPasswordEnterCount;
+
+extern int giScreenSwitch;
+extern int giScreenTimeCount;
+extern int giPopUpScreen;
+extern int giRpmValue;
+extern char gcPowerOnExecute;
+extern int p_giScreenSwitch;
+extern int giCheckTrans;
+extern float gfEcl;
+extern float gfFuel			;
+extern float gfEop				;
+extern float gfEct				;
+extern int giEngineRpm 		;
+extern int giOutputRpm 		;
+extern int giVehicleSpeed  	;
+extern float gfTop				;
+extern float gfTot		 		;
+extern float gfBot		 		;
+extern float gfVolt 			;
+extern float gfEot				;
+extern int giSelectedgear  	;
+extern int giCurrentGear   	;
+extern int giHourMeter	 		;
+
+extern Uint8 gucPrevKeyValue;
+
+extern int giIcon01	;
+extern int giIcon02	;
+extern int giIcon03	;
+extern int giIcon04	;
+extern int giIcon05	;
+extern int giIcon06	;
+extern int giIcon07	;
+extern int giIcon08	;
+extern int giIcon09	;
+extern int giIcon10	;
+extern int giIcon11	;
+extern int giIcon12	;
+extern int giIcon13	;
+extern int giIcon14	;
+extern int giIcon15	;
+extern int giIcon16	;
+extern int giIcon17	;
+extern int giIcon18	;
+extern int giIconRevCol	;
+
+extern int giOdometer	;
+
+extern int giNaviPopUp;
+extern int giIntensityPopUp;
+extern int giIntensityPercent;
+extern int giPopUpCol;
+extern int giDMPopUp		;
+extern int gidel;
+
+extern int giMode		   ;
+extern int giProcessRpm    ;
+extern int giProcessKmph   ;
+extern int giProcessEop    ;
+extern int giProcessEot    ;
+extern int giProcessVolt   ;
+extern int giProcessFuel   ;
+
+extern bool bToggleBit 		;
+extern bool bToggleIcon01	;
+extern bool bToggleIcon02	;
+extern bool bToggleIcon03	;
+extern bool bToggleIcon04	;
+extern bool bToggleIcon05	;
+extern bool bToggleIcon06	;
+extern bool bToggleIcon07	;
+extern bool bToggleIcon08	;
+extern bool bToggleIcon09	;
+extern bool bToggleIcon10	;
+extern bool bToggleIcon11	;
+extern bool bToggleIcon12	;
+extern bool bToggleIcon13	;
+extern bool bToggleIcon14	;
+extern bool bToggleIcon15	;
+extern bool bToggleIcon16	;
+extern bool bToggleIcon17	;
+
+extern bool bNightMode		;
+extern bool bPrevMode		;
+extern bool bTimeFormat		;
+
+//extern Uint64 gulDigitalInputFrame1;
+//extern Uint64 gulDigitalInputFrame2;
+//extern Uint64 gulAnalogInputFrame1	;
+//extern Uint64 gulAnalogInputFrame2;
+//extern Uint64 gulAnalogInputFrame3;
+
+extern float gfBotValue;
+extern float gfEotValue;
+extern float gfTopValue;
+extern float gfFuelValue;
+extern float gfVoltageValue;
+
+extern Uint16 guiVoltageCounts;
+extern Uint16 guiBotCounts;
+extern Uint16 guiEotCounts;
+extern Uint16 guiTopCounts;
+extern Uint16 guiFuelCounts;
+
+extern Uint16 guiToggleCount		 ;
+
+
+struct GuageIndicator
+{
+    int16_t  CurrentValue;
+    int16_t  PreviousValue;
+};
+
+extern struct GuageIndicator GuageRpm;
+extern struct GuageIndicator GuageKmph;
+extern struct GuageIndicator GuageEop;
+extern struct GuageIndicator GuageEct;
+extern struct GuageIndicator GuageFuel;
+
+extern struct GuageIndicator GuageVolt;
+extern struct GuageIndicator GuageVolt2;
+
+extern struct GuageIndicator GuageEot;
+extern struct GuageIndicator GuageTot;
+extern struct GuageIndicator GuageBot;
+extern struct GuageIndicator GuageTop;
+
+extern struct
+{
+	Uint8 Date;
+	Uint8 Month;
+	Uint16 Year;
+	Uint8 Hour;
+	Uint8 Minute;
+	Uint8 Second;
+	Uint8 Meredian;
+}strDateTime;
+
+struct AnalogData
+{
+	Uint64
+	An1Raw 			:	16,
+	An1Converted 	:	16,
+	An2Raw 			:	16,
+	An2Converted	:	16;
+};
+
+extern union
+{
+	Uint64 	all;
+    struct AnalogData part;
+}strIoAnalog;
+
+extern unsigned char gucRecordingStatus;
+extern unsigned char gucCopyStatus;
+extern unsigned char gucReadStatus;
+extern unsigned char gucIdStatus;
+extern unsigned char gucRecordingStatus;
+extern unsigned int  guiLogFileSize;
+extern unsigned char gucRecTimeCount;
+extern bool bStartMinMaxFrameLog;
+extern bool bStartRawFrameLog;
+extern bool bStartRawFrameUsb;
+extern bool bStartFaultFrameLog;
+extern bool bStartFaultFrameUsb;
+extern unsigned int guiRawLogCount;
+
+
+extern bool bPasswordTest;
+extern Uint8 gucCurrentScreen;
+extern Uint8 gucKeyPressed;
+extern Uint8 gucFunctionPopUpScreen;
+
+extern struct
+{
+	Uint8 	CurrentCount;
+	Uint8 	MaximumCount;
+	Uint8 	DeviceId;
+	Uint32	SPN;
+	Uint8	FMI;
+	Uint8   OccCount;
+	Uint8   Address;
+	Uint8   Message;
+	Uint8   Status;
+}strDm1Screen;
+extern unsigned char gucDm1FaultPtr;
+extern unsigned char lucAddress	 ;
+#endif

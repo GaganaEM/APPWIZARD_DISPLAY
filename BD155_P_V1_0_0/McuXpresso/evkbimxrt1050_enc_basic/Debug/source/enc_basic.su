@@ -1,0 +1,5 @@
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_gpio.h:176:24:GPIO_PinRead	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_gpio.h:187:24:GPIO_ReadPinInput	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_enc.h:482:24:ENC_GetHoldPositionDifferenceValue	16	static
+D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\evkbimxrt1050_enc_basic\drivers/fsl_enc.h:510:24:ENC_GetHoldRevolutionValue	16	static
+../source/enc_basic.c:36:5:main	48	static

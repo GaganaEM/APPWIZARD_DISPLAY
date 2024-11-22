@@ -1,0 +1,27 @@
+18:22:59 **** Incremental Build of configuration Debug for project evkbimxrt1050_qtmr_inputcapture_outputpwm ****
+make -r -j8 all 
+Building file: ../source/qtmr_inputcapture_outputpwm.c
+Invoking: MCU C Compiler
+arm-none-eabi-gcc -std=gnu99 -D__REDLIB__ -DCPU_MIMXRT1052DVL6B -DCPU_MIMXRT1052DVL6B_cm7 -DSDK_DEBUGCONSOLE=1 -DXIP_EXTERNAL_FLASH=1 -DXIP_BOOT_HEADER_ENABLE=1 -DMCUXPRESSO_SDK -DCR_INTEGER_PRINTF -DPRINTF_FLOAT_ENABLE=0 -D__MCUXPRESSO -D__USE_CMSIS -DDEBUG -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\board" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\source" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\utilities" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\drivers" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\device" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\component\uart" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\component\lists" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\xip" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\CMSIS" -I"D:\RAJASHEKHAR\WORKSPACE\Cluster_ECU_Dozer\McuXpresso\evkbimxrt1050_qtmr_inputcapture_outputpwm\evkbimxrt1050\driver_examples\qtmr\inputcapture_outputpwm" -O0 -fno-common -g3 -c -ffunction-sections -fdata-sections -ffreestanding -fno-builtin -fmerge-constants -fmacro-prefix-map="../source/"= -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -D__REDLIB__ -fstack-usage -specs=redlib.specs -MMD -MP -MF"source/qtmr_inputcapture_outputpwm.d" -MT"source/qtmr_inputcapture_outputpwm.o" -MT"source/qtmr_inputcapture_outputpwm.d" -o "source/qtmr_inputcapture_outputpwm.o" "../source/qtmr_inputcapture_outputpwm.c"
+Finished building: ../source/qtmr_inputcapture_outputpwm.c
+ 
+Building target: evkbimxrt1050_qtmr_inputcapture_outputpwm.axf
+Invoking: MCU Linker
+arm-none-eabi-gcc -nostdlib -Xlinker -Map="evkbimxrt1050_qtmr_inputcapture_outputpwm.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -Xlinker --cref -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -T evkbimxrt1050_qtmr_inputcapture_outputpwm_Debug.ld -o "evkbimxrt1050_qtmr_inputcapture_outputpwm.axf"  ./xip/evkbimxrt1050_flexspi_nor_config.o ./xip/fsl_flexspi_nor_boot.o  ./utilities/fsl_assert.o ./utilities/fsl_debug_console.o  ./startup/startup_mimxrt1052.o  ./source/qtmr_inputcapture_outputpwm.o ./source/semihost_hardfault.o  ./drivers/fsl_clock.o ./drivers/fsl_common.o ./drivers/fsl_common_arm.o ./drivers/fsl_gpio.o ./drivers/fsl_lpuart.o ./drivers/fsl_qtmr.o  ./device/system_MIMXRT1052.o  ./component/uart/fsl_adapter_lpuart.o  ./component/lists/fsl_component_generic_list.o  ./board/board.o ./board/clock_config.o ./board/dcd.o ./board/pin_mux.o   
+Memory region         Used Size  Region Size  %age Used
+     BOARD_FLASH:       28356 B        64 MB      0.04%
+        SRAM_DTC:        8452 B       128 KB      6.45%
+        SRAM_ITC:          0 GB       128 KB      0.00%
+         SRAM_OC:          0 GB       256 KB      0.00%
+     BOARD_SDRAM:          0 GB        30 MB      0.00%
+   NCACHE_REGION:          0 GB         2 MB      0.00%
+Finished building target: evkbimxrt1050_qtmr_inputcapture_outputpwm.axf
+ 
+Performing post-build steps
+arm-none-eabi-size "evkbimxrt1050_qtmr_inputcapture_outputpwm.axf"; # arm-none-eabi-objcopy -v -O binary "evkbimxrt1050_qtmr_inputcapture_outputpwm.axf" "evkbimxrt1050_qtmr_inputcapture_outputpwm.bin" ; # checksum -p MIMXRT1052xxxxB -d "evkbimxrt1050_qtmr_inputcapture_outputpwm.bin";
+   text	   data	    bss	    dec	    hex	filename
+  28352	      4	   8448	  36804	   8fc4	evkbimxrt1050_qtmr_inputcapture_outputpwm.axf
+ 
+
+18:23:01 Build Finished. 0 errors, 0 warnings. (took 2s.473ms)
+

@@ -1,0 +1,102 @@
+/*********************************************************************
+*                     SEGGER Microcontroller GmbH                    *
+*        Solutions for real time microcontroller applications        *
+**********************************************************************
+*                                                                    *
+*        (c) 1996 - 2021  SEGGER Microcontroller GmbH                *
+*                                                                    *
+*        Internet: www.segger.com    Support:  support@segger.com    *
+*                                                                    *
+**********************************************************************
+----------------------------------------------------------------------
+File        : APPW_MainTask.c
+Purpose     : APPWIZARD application entry point
+---------------------------END-OF-HEADER------------------------------
+*/
+#include "../../source/Files_Header/sourceMacro.h"
+#include "../../source/Files_Header/sourceExternVariable.h"
+#include "../../source/Files_Header/sourceInclude.h"
+
+#include "Generated/Resource.h"
+
+/*********************************************************************
+*
+*       MainTask
+*/
+void MainTask(void) {
+  //
+  // Setup configuration dependent pointers
+  //
+	if(gcPowerOnExecute == 1)
+	{
+		gcPowerOnExecute = 0;
+
+
+		APPW_X_Setup();
+		//
+		// Initialize AppWizard
+		//
+		APPW_Init(APPW_PROJECT_PATH);
+		//
+		// Create all persistent screens except initial screen
+		//
+		APPW_CreatePersistentScreens();
+		//
+		// Create initial screen...
+		//
+		APPW_CreateRoot(APPW_INITIAL_SCREEN, WM_HBKWIN);
+		//
+		// ...and keep it alive
+		//
+	}
+	else
+	{}
+
+	APPW_SetVarData(ID_VAR_DISPSREEN,giScreenSwitch);
+	APPW_SetVarData(ID_VAR_DAY,06);
+	APPW_SetVarData(ID_VAR_MONTH,11);
+	APPW_SetVarData(ID_VAR_YEAR,2021);
+	APPW_SetVarData(ID_VAR_HOUR,12);
+	APPW_SetVarData(ID_VAR_MINUTE,41);
+	APPW_SetVarData(ID_VAR_MEREDIAN,2);
+
+
+	APPW_SetVarData(ID_VAR_RPM,giRpmValue);
+
+	APPW_SetVarData(ID_VAR_ICON01,giIcon01);
+	APPW_SetVarData(ID_VAR_ICON02,giIcon02);
+	APPW_SetVarData(ID_VAR_ICON03,giIcon03);
+	APPW_SetVarData(ID_VAR_ICON04,giIcon04);
+	APPW_SetVarData(ID_VAR_ICON05,giIcon05);
+	APPW_SetVarData(ID_VAR_ICON06,giIcon06);
+	APPW_SetVarData(ID_VAR_ICON07,giIcon07);
+	APPW_SetVarData(ID_VAR_ICON08,giIcon08);
+	APPW_SetVarData(ID_VAR_ICON09,giIcon09);
+	APPW_SetVarData(ID_VAR_ICON10,giIcon10);
+	APPW_SetVarData(ID_VAR_ICON11,giIcon11);
+	APPW_SetVarData(ID_VAR_ICON12,giIcon12);
+	APPW_SetVarData(ID_VAR_ICON13,giIcon13);
+	APPW_SetVarData(ID_VAR_ICON14,giIcon14);
+	APPW_SetVarData(ID_VAR_ICON15,giIcon15);
+	APPW_SetVarData(ID_VAR_ICON16,giIcon16);
+	APPW_SetVarData(ID_VAR_ICON17,giIcon17);
+	APPW_SetVarData(ID_VAR_ICON18,giIcon18);
+	APPW_SetVarData(ID_VAR_REVCOL,giIconRevCol);
+
+	APPW_SetVarData(ID_VAR_KM,giOdometer);
+	APPW_SetVarData(ID_VAR_HRMETER,giHourMeter);
+
+	APPW_SetVarData(ID_VAR_NAVIPOPUP,giNaviPopUp);
+	APPW_SetVarData(ID_VAR_CHANGE_LUM,giIntensityPopUp);
+	APPW_SetVarData(ID_VAR_INTENSITY_PER,giIntensityPercent);
+
+
+	while (GUI_Exec1()) {
+		APPW_Exec();
+	}
+	APPW_Exec();
+	GUI_X_Delay(5);
+
+}
+
+/*************************** End of file ****************************/

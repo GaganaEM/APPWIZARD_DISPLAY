@@ -1,0 +1,12 @@
+../drivers/fsl_common_arm.h:210:20:_SDK_AtomicLocalClearAndSet4Byte	4	static
+../drivers/fsl_clock.h:1186:20:CLOCK_ControlGate	8	static
+../drivers/fsl_clock.h:1203:20:CLOCK_EnableClock	8	static
+../drivers/fsl_clock.h:1213:20:CLOCK_DisableClock	8	static
+../drivers/fsl_elcdif.c:75:17:ELCDIF_GetInstance	8	static
+../drivers/fsl_elcdif.c:102:6:ELCDIF_RgbModeInit	16	static
+../drivers/fsl_elcdif.c:178:6:ELCDIF_RgbModeGetDefaultConfig	8	static
+../drivers/fsl_elcdif.c:206:6:ELCDIF_RgbModeSetPixelFormat	8	static
+../drivers/fsl_elcdif.c:222:6:ELCDIF_Deinit	8	static
+../drivers/fsl_elcdif.c:241:6:ELCDIF_RgbModeStop	0	static
+../drivers/fsl_elcdif.c:256:6:ELCDIF_Reset	0	static
+../drivers/fsl_elcdif.c:350:10:ELCDIF_UpdateLut	4	static

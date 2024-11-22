@@ -1,0 +1,32 @@
+!SESSION 2024-05-21 18:12:05.687 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=17.0.7
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_IN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.nxp.mcuxpresso.core.datamodels 1 0 2024-05-21 18:12:17.413
+!MESSAGE Recreating part support. No part support available.
+
+!ENTRY org.eclipse.egit.ui 2 0 2024-05-21 18:12:20.067
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\admin'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+
+!ENTRY com.nxp.mcuxpresso.core.datamodels 1 0 2024-05-21 18:12:20.771
+!MESSAGE The device 'MIMXRT1052xxxxB' (version='1.0.0') from SDK 'SDK_2.x_EVKB-IMXRT1050' (version='2.15.000', build='epluginsite797 2024-01-15') will be installed.
+!SESSION 2024-11-22 13:37:49.846 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=17.0.7
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_IN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.egit.ui 2 0 2024-11-22 13:38:06.406
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\admin'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.

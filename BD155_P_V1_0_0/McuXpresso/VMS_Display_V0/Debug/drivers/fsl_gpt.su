@@ -1,0 +1,11 @@
+../drivers/fsl_common_arm.h:210:20:_SDK_AtomicLocalClearAndSet4Byte	4	static
+../drivers/fsl_clock.h:1186:20:CLOCK_ControlGate	8	static
+../drivers/fsl_clock.h:1203:20:CLOCK_EnableClock	8	static
+../drivers/fsl_clock.h:1213:20:CLOCK_DisableClock	8	static
+../drivers/fsl_gpt.h:168:20:GPT_SoftwareReset	0	static
+../drivers/fsl_gpt.h:188:20:GPT_SetClockSource	0	static
+../drivers/fsl_gpt.h:217:20:GPT_SetClockDivider	8	static
+../drivers/fsl_gpt.c:34:17:GPT_GetInstance	8	static
+../drivers/fsl_gpt.c:58:6:GPT_Init	16	static
+../drivers/fsl_gpt.c:85:6:GPT_Deinit	8	static
+../drivers/fsl_gpt.c:112:6:GPT_GetDefaultConfig	8	static

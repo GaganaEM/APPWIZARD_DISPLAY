@@ -1,0 +1,11 @@
+"Task Aware Debugger for GDB" version 11.9.0 (202311161535)
+Copyright 2016-2023 NXP
+==================================
+16:31:00.143 INFO: [ZephyrRTOS] .config file could not be read [D:\Gagana\VMS_HMI_TEST_SOFTWARE_DEVLOPMENT\20240403\VMS_HMI_DISPLAY_SW\BD155_P_V1_0_0\McuXpresso\VMS_Display_V0\Debug\.config (The system cannot find the file specified)]
+16:31:00.148 INFO: [TadModel] DSF session ID 71 has started.
+16:31:07.511 INFO: [TadState] TAD state changed: DEBUG_STARTED -> DEBUG_INIT_0 (SUSPENDED, USER_REQUEST)
+16:34:43.721 INFO: [TadState] TAD state changed: DEBUG_INIT_0 -> DEBUG_INIT_1 (RESUMED, USER_REQUEST)
+16:34:43.841 INFO: [TadState] TAD state changed: DEBUG_INIT_1 -> DEBUG_SUSPENDED (SUSPENDED, BREAKPOINT)
+16:34:46.74 INFO: [TadState] TAD state changed: DEBUG_SUSPENDED -> DEBUG_RESUMED (RESUMED, USER_REQUEST)
+16:35:58.689 INFO: [TadState] TAD state changed: DEBUG_RESUMED -> READY (SUSPENDED, SIGNAL)
+16:35:59.174 INFO: [TadModel] DSF session ID 71 has ended.

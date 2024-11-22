@@ -1,0 +1,3141 @@
+/*
+ * Copyright (c) 2016, Freescale Semiconductor, Inc.
+ * Copyright 2016-2017 NXP
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+#include "sourceMain.h"
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+
+#define APP_PXP                PXP
+#define EXAMPLE_GPT            GPT2
+#define EXAMPLE_GPT_TICK_TO_MS 25
+#define DEMO_SDCARD_POWER_CTRL_FUNCTION_EXIST
+#define BUFFER_SIZE (20000)
+
+#define ADC_BASE          ADC2
+//#define DEMO_ADC_USER_CHANNEL  0U
+#define ADC_CHANNEL_GROUP  0
+
+#define BOARD_QTMR_BASEADDR              TMR3
+#define BOARD_QTMR_INPUT_CAPTURE_CHANNEL kQTMR_Channel_3//kQTMR_Channel_0
+#define BOARD_QTMR_PWM_CHANNEL           kQTMR_Channel_1
+#define QTMR_CounterInputPin             kQTMR_Counter3InputPin//kQTMR_Counter0InputPin
+
+/* Interrupt number and interrupt handler for the QTMR instance used */
+#define QTMR_IRQ_ID      TMR3_IRQn
+#define QTMR_IRQ_HANDLER TMR3_IRQHandler
+
+/* QTMR Clock source divider for Ipg clock source, the value of two macros below should be aligned. */
+#define QTMR_PRIMARY_SOURCE       (kQTMR_ClockDivide_64)
+#define QTMR_CLOCK_SOURCE_DIVIDER (64)
+/* The frequency of the source clock after divided. */
+#define QTMR_SOURCE_CLOCK (CLOCK_GetFreq(kCLOCK_IpgClk) / QTMR_CLOCK_SOURCE_DIVIDER)
+
+#define EXAMPLE_I2C_MASTER_BASE (LPI2C1_BASE)
+/* Select USB1 PLL (480 MHz) as master lpi2c clock source */
+#define LPI2C_CLOCK_SOURCE_SELECT (0U)
+/* Clock divider for master lpi2c clock source */
+#define LPI2C_CLOCK_SOURCE_DIVIDER (5U)
+/* Get frequency of lpi2c clock */
+#define LPI2C_CLOCK_FREQUENCY ((CLOCK_GetFreq(kCLOCK_Usb1PllClk) / 8) / (LPI2C_CLOCK_SOURCE_DIVIDER + 1U))
+#define LPI2C_MASTER_CLOCK_FREQUENCY LPI2C_CLOCK_FREQUENCY
+#define WAIT_TIME                    20U
+
+#define EXAMPLE_I2C_MASTER ((LPI2C_Type *)EXAMPLE_I2C_MASTER_BASE)
+#define LPI2C_MASTER_SLAVE_ADDR_7BIT 0x6F
+#define LPI2C_BAUDRATE               100000
+//#define LPI2C_DATA_LENGTH            33U
+
+lpi2c_master_config_t masterConfig;
+
+FRESULT error;
+uint32_t spn 			= 0;
+uint8_t fmi 			= 0;
+//unsigned long record_adjust_10min_time_count=0;
+
+struct test
+{
+	unsigned char a:1;
+
+};
+
+void BOARD_PowerOffSDCARD(void);
+void BOARD_PowerOnSDCARD(void);
+int funcSdCardApplication(void);
+unsigned long count=0;
+static status_t sdcardWaitCardInsert(void);
+
+static FATFS g_fileSystem; /* File system object */
+//FIL g_fileObject;   /* File object */
+FIL g_fileObject1;
+
+static DIR g_opendir;
+
+
+
+//SDK_ALIGN(uint8_t g_bufferWrite[BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
+SDK_ALIGN(uint8_t g_bufferRead[20000], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
+FRESULT error;
+DIR directory; /* Directory object */
+FILINFO fileInformation;
+UINT bytesWritten;
+UINT bytesRead;
+
+#define SDCARD_NEW_LINE f_write(&g_fileObject1,"\n",sizeof("\n"),&bytesWritten)
+
+adc_config_t adcConfigStrcut;
+adc_channel_config_t adcChannelConfigStruct;
+
+qtmr_config_t qtmrConfig;
+
+//unsigned char usb_attached=0;
+/*******************************************************************************
+
+
+
+static usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
+                                  usb_host_configuration_handle configurationHandle,
+                                  uint32_t eventCode);
+
+/*!
+ * @brief app initialization.
+ */
+
+static void USB_HostApplicationInit(void);
+extern void USB_HostClockInit(void);
+extern void USB_HostIsrEnable(void);
+extern void USB_HostTaskFn(void *param);
+void BOARD_InitHardware(void);
+void BOARD_EnableLcdInterrupt(void);
+
+extern usb_host_msd_fatfs_instance_t g_MsdFatfsInstance;
+usb_host_handle g_HostHandle;
+
+/*******************************************************************************
+ * Prototypes
+ ******************************************************************************/
+void BOARD_EnableLcdInterrupt(void);
+
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
+
+/* Initialize the LCD_DISP. */
+void BOARD_InitLcd(void)
+{
+    volatile uint32_t i = 0x1000U;
+
+    gpio_pin_config_t config = {
+        kGPIO_DigitalOutput,
+        0,
+        kGPIO_NoIntmode,
+    };
+
+    /* Reset the LCD. */
+    GPIO_PinInit(LCD_DISP_GPIO, LCD_DISP_GPIO_PIN, &config);
+
+    GPIO_WritePinOutput(LCD_DISP_GPIO, LCD_DISP_GPIO_PIN, 0);
+
+    while (i--)
+    {
+    }
+
+    GPIO_WritePinOutput(LCD_DISP_GPIO, LCD_DISP_GPIO_PIN, 1);
+
+    /* Backlight. */
+    config.outputLogic = 1;
+    GPIO_PinInit(LCD_BL_GPIO, LCD_BL_GPIO_PIN, &config);
+
+    /*Clock setting for LPI2C*/
+    CLOCK_SetMux(kCLOCK_Lpi2cMux, LPI2C_CLOCK_SOURCE_SELECT);
+    CLOCK_SetDiv(kCLOCK_Lpi2cDiv, LPI2C_CLOCK_SOURCE_DIVIDER);
+}
+
+void BOARD_InitLcdifPixelClock(void)
+{
+    /*
+     * The desired output frame rate is 60Hz. So the pixel clock frequency is:
+     * (480 + 41 + 4 + 18) * (272 + 10 + 4 + 2) * 60 = 9.2M.
+     * Here set the LCDIF pixel clock to 9.3M.
+     */
+
+    /*
+     * Initialize the Video PLL.
+     * Video PLL output clock is OSC24M * (loopDivider + (denominator / numerator)) / postDivider = 93MHz.
+     */
+    clock_video_pll_config_t config = {
+        .loopDivider = 175,//31
+        .postDivider = 8,
+        .numerator   = 0,
+        .denominator = 0,
+    };
+
+    CLOCK_InitVideoPll(&config);
+
+    /*
+     * 000 derive clock from PLL2
+     * 001 derive clock from PLL3 PFD3
+     * 010 derive clock from PLL5
+     * 011 derive clock from PLL2 PFD0
+     * 100 derive clock from PLL2 PFD1
+     * 101 derive clock from PLL3 PFD1
+     */
+    CLOCK_SetMux(kCLOCK_LcdifPreMux, 2);
+    CLOCK_SetDiv(kCLOCK_LcdifPreDiv, 4);
+    CLOCK_SetDiv(kCLOCK_LcdifDiv, 1);
+}
+
+void BOARD_InitGPT(void)
+{
+    gpt_config_t gptConfig;
+
+    GPT_GetDefaultConfig(&gptConfig);
+
+    gptConfig.enableFreeRun = true;
+    gptConfig.divider       = 3000;
+
+    /* Initialize GPT module */
+    GPT_Init(EXAMPLE_GPT, &gptConfig);
+    GPT_StartTimer(EXAMPLE_GPT);
+}
+
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
+
+void USB_OTG1_IRQHandler(void)
+{
+    USB_HostEhciIsrFunction(g_HostHandle);
+}
+
+void USB_OTG2_IRQHandler(void)
+{
+    USB_HostEhciIsrFunction(g_HostHandle);
+}
+
+void USB_HostClockInit(void)
+{
+    usb_phy_config_struct_t phyConfig = {
+        BOARD_USB_PHY_D_CAL,
+        BOARD_USB_PHY_TXCAL45DP,
+        BOARD_USB_PHY_TXCAL45DM,
+    };
+
+    if (CONTROLLER_ID == kUSB_ControllerEhci0)
+    {
+        CLOCK_EnableUsbhs0PhyPllClock(kCLOCK_Usbphy480M, 480000000U);
+        CLOCK_EnableUsbhs0Clock(kCLOCK_Usb480M, 480000000U);
+    }
+    else
+    {
+        CLOCK_EnableUsbhs1PhyPllClock(kCLOCK_Usbphy480M, 480000000U);
+        CLOCK_EnableUsbhs1Clock(kCLOCK_Usb480M, 480000000U);
+    }
+    USB_EhciPhyInit(CONTROLLER_ID, BOARD_XTAL0_CLK_HZ, &phyConfig);
+}
+
+void USB_HostIsrEnable(void)
+{
+    uint8_t irqNumber;
+
+    uint8_t usbHOSTEhciIrq[] = USBHS_IRQS;
+    irqNumber                = usbHOSTEhciIrq[CONTROLLER_ID - kUSB_ControllerEhci0];
+/* USB_HOST_CONFIG_EHCI */
+
+/* Install isr, set priority, and enable IRQ. */
+#if defined(__GIC_PRIO_BITS)
+    GIC_SetPriority((IRQn_Type)irqNumber, USB_HOST_INTERRUPT_PRIORITY);
+#else
+    NVIC_SetPriority((IRQn_Type)irqNumber, USB_HOST_INTERRUPT_PRIORITY);
+#endif
+    EnableIRQ((IRQn_Type)irqNumber);
+}
+
+void USB_HostTaskFn(void *param)
+{
+    USB_HostEhciTaskFunction(param);
+}
+
+/*!
+ * @brief USB isr function.
+ */
+
+#if ((defined USB_HOST_CONFIG_COMPLIANCE_TEST) && (USB_HOST_CONFIG_COMPLIANCE_TEST))
+extern usb_status_t USB_HostTestEvent(usb_device_handle deviceHandle,
+                                      usb_host_configuration_handle configurationHandle,
+                                      uint32_t eventCode);
+#endif
+
+static usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
+                                  usb_host_configuration_handle configurationHandle,
+                                  uint32_t eventCode)
+{
+#if ((defined USB_HOST_CONFIG_COMPLIANCE_TEST) && (USB_HOST_CONFIG_COMPLIANCE_TEST))
+    usb_host_configuration_t *configuration;
+    usb_status_t status1;
+    usb_status_t status2;
+    uint8_t interfaceIndex = 0;
+#endif
+    usb_status_t status = kStatus_USB_Success;
+    switch (eventCode & 0x0000FFFFU)
+    {
+        case kUSB_HostEventAttach:
+#if ((defined USB_HOST_CONFIG_COMPLIANCE_TEST) && (USB_HOST_CONFIG_COMPLIANCE_TEST))
+            status1 = USB_HostTestEvent(deviceHandle, configurationHandle, eventCode);
+            status2 = USB_HostMsdEvent(deviceHandle, configurationHandle, eventCode);
+            if ((status1 == kStatus_USB_NotSupported) && (status2 == kStatus_USB_NotSupported))
+            {
+                status = kStatus_USB_NotSupported;
+            }
+#else
+            status = USB_HostMsdEvent(deviceHandle, configurationHandle, eventCode);
+#endif
+            break;
+
+        case kUSB_HostEventNotSupported:
+#if ((defined USB_HOST_CONFIG_COMPLIANCE_TEST) && (USB_HOST_CONFIG_COMPLIANCE_TEST))
+            configuration = (usb_host_configuration_t *)configurationHandle;
+            for (interfaceIndex = 0; interfaceIndex < configuration->interfaceCount; ++interfaceIndex)
+            {
+                if (((usb_descriptor_interface_t *)configuration->interfaceList[interfaceIndex].interfaceDesc)
+                        ->bInterfaceClass == 9U) /* 9U is hub class code */
+                {
+                    break;
+                }
+            }
+
+            if (interfaceIndex < configuration->interfaceCount)
+            {
+                usb_echo("unsupported hub\r\n");
+            }
+            else
+            {
+                usb_echo("Unsupported Device\r\n");
+            }
+#else
+            usb_echo("Unsupported Device\r\n");
+#endif
+            break;
+
+        case kUSB_HostEventEnumerationDone:
+#if ((defined USB_HOST_CONFIG_COMPLIANCE_TEST) && (USB_HOST_CONFIG_COMPLIANCE_TEST))
+            status1 = USB_HostTestEvent(deviceHandle, configurationHandle, eventCode);
+            status2 = USB_HostMsdEvent(deviceHandle, configurationHandle, eventCode);
+            if ((status1 != kStatus_USB_Success) && (status2 != kStatus_USB_Success))
+            {
+                status = kStatus_USB_Error;
+            }
+#else
+            status = USB_HostMsdEvent(deviceHandle, configurationHandle, eventCode);
+#endif
+            break;
+
+        case kUSB_HostEventDetach:
+#if ((defined USB_HOST_CONFIG_COMPLIANCE_TEST) && (USB_HOST_CONFIG_COMPLIANCE_TEST))
+            status1 = USB_HostTestEvent(deviceHandle, configurationHandle, eventCode);
+            status2 = USB_HostMsdEvent(deviceHandle, configurationHandle, eventCode);
+            if ((status1 != kStatus_USB_Success) && (status2 != kStatus_USB_Success))
+            {
+                status = kStatus_USB_Error;
+            }
+#else
+            status = USB_HostMsdEvent(deviceHandle, configurationHandle, eventCode);
+#endif
+            break;
+
+        case kUSB_HostEventEnumerationFail:
+            usb_echo("enumeration failed\r\n");
+            break;
+
+        default:
+            break;
+    }
+    return status;
+}
+
+static void USB_HostApplicationInit(void)
+{
+    usb_status_t status = kStatus_USB_Success;
+
+    USB_HostClockInit();
+
+#if ((defined FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT))
+    SYSMPU_Enable(SYSMPU, 0);
+#endif /* FSL_FEATURE_SOC_SYSMPU_COUNT */
+
+    status = USB_HostInit(CONTROLLER_ID, &g_HostHandle, USB_HostEvent);
+
+    if (status != kStatus_USB_Success)
+    {
+        usb_echo("host init error\r\n");
+        return;
+    }
+    USB_HostIsrEnable();
+
+    usb_echo("host init done\r\n");
+}
+
+void SysTick_Handler(void)
+{
+	funcKeypadPeriodicTimeCall();
+
+	if(bStartRawFrameLog == 1 && timer_updated==1 && SDCardfuncBegin==0)
+	{
+		guiRawLogCount++;
+		if(guiRawLogCount >= 100)
+		{
+			guiRawLogCount = 0;
+			gucRecTimeCount--;
+			timer_updated=0;
+
+			if(gucRecTimeCount == 0)
+			{
+				bStartRawFrameLog 	= 0;
+				gucRecTimeCount 	= 0;
+				guiRawLogCount		= 0;
+//				gucRecordingStatus  = 2;
+				store_raw_can_data_sd_card  = 1;
+			}
+		}
+	}
+
+	if(start_data_logging_for_every_10min==1)
+	{
+		dataloggingcounter++;
+		if(dataloggingcounter>=60000)  //10mins
+		{
+			dataloggingcounter=0;
+			data_logging_10min=1;
+			start_data_logging_for_every_10min=0;
+		}
+	}
+
+
+	if(guiDiagTimer==1)
+	{
+		guiDiagCounter++;
+		if(guiDiagCounter >= 300)
+		{
+			guiDiagCounter=0;
+			guiRequestDM1Data=1;
+			guiDiagCounttemp++;
+		}
+		if(guiDiagCounttemp==2)
+		{
+			guiDiagCounter=0;
+			guiDiagCounttemp=0;
+			guiDiagPopUp = 0;
+			guiDiagTimer=0;
+		}
+	}
+
+//	if(bStartMinMaxFrameLog == 1)
+//	{
+//		guiLogFileSize++;
+//	}
+//	if(bStartFaultFrameLog == 1)
+//	{
+//		guiLogFileSize++;
+//	}
+
+	if(update_rpm == 1)
+	{
+		cnt_rpm++;
+		if(cnt_rpm > 400)
+		{
+			cnt_rpm = 0;
+			update_rpm = 0;
+		}
+	}
+
+	funcTransmitCanFrame();
+	guiToggleCount++;
+
+	if(guiToggleCount >= 100)
+	{
+		bToggleBit = !bToggleBit;
+	}
+
+//	if(bNightMode == 1)
+//	{
+//		if(bNightMode != bPrevMode)
+//		{
+//			bPrevMode = bNightMode;
+//			giMode = bNightMode;
+//		}
+//		giMode++;
+//		if(giMode > 8)
+//		{
+//			giMode = 1;
+//		}
+//	}
+//	else
+//	{
+//		if(bNightMode != bPrevMode)
+//		{
+//			bPrevMode = bNightMode;
+//			giMode = bNightMode;
+//		}
+//		giMode++;
+//		if(giMode > 18)
+//		{
+//			giMode = 11;
+//		}
+//	}
+
+	if(start_pendrive_timeout==1)
+	{
+		pendrive_counter_timeout++;
+
+		if(pendrive_counter_timeout>1000)
+		{
+			pendrive_counter_timeout=0;
+			pendrive_detected_timeout=1;
+			start_pendrive_timeout=0;
+			pendrivestatusstrttimer=1;
+		}
+	}
+
+	if(pendrivestatusstrttimer==1)
+	{
+	    pendrivestatuscounter++;
+		if(pendrivestatuscounter>250)
+		{
+			pendrivestatuscounter=0;
+			guiPendrivePoPup=0;
+			pendrivestatusstrttimer=0;
+		}
+	}
+
+	if(CANBStartTimer==1)
+	{
+		CANBTimeoutCounter++;
+
+		if(CANBTimeoutCounter>50)
+		{
+			CANBTimeoutCounter=0;
+			CANBTimeout=1;
+			CANBStartTimer=0;
+		}
+	}
+
+	if(giScreenSwitch == 0)
+	{
+		giScreenTimeCount++;
+		if(giScreenTimeCount > 300)
+		{
+			giScreenTimeCount = 0;
+			giScreenSwitch = 1;
+			gucCurrentScreen = 1;
+		}
+	}
+
+	if(giScreenSwitch == 1)
+	{
+		giScreenTimeCount++;
+		if(giScreenTimeCount > 300)
+		{
+			giScreenTimeCount = 0;
+			giScreenSwitch = 2;
+			gucCurrentScreen = 2;
+		}
+	}
+
+	if(giScreenSwitch == 2)
+	{
+		giScreenTimeCount++;
+
+		if(giScreenTimeCount > 300)
+		{
+			giScreenTimeCount = 0;
+			giScreenSwitch = 3;
+			gucCurrentScreen = 3;
+		}
+	}
+
+	if(giScreenSwitch == 3)
+	{
+		giScreenTimeCount++;
+
+		if(giScreenTimeCount > 300)
+		{
+			giScreenTimeCount = 0;
+			giScreenSwitch = 6;
+			gucCurrentScreen = 6;
+		    gisdcardpopup=1;
+		}
+	}
+
+	if(gisdcardpopup==1)
+	{
+		giTimeCountpopup++;
+		if(giTimeCountpopup > 300)
+		{
+			giTimeCountpopup=0;
+			gisdcardpopup=0;
+			bStartRawFrameUsb=0;
+			bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+			bStartMinMaxFrameLog=0;
+#else
+			bStartDataLogging=0;
+#endif
+			bStartRawFrameLog=0;
+			gucRecordingStatus=0;
+			gucCopyStatus=0;
+			power_on_SD=1;
+		}
+	}
+
+
+//	if(giScreenSwitch == 4)
+//	{
+//		giScreenTimeCount++;
+//		if(giScreenTimeCount > 100)
+//		{
+//			giScreenTimeCount = 0;
+//			giScreenSwitch = 6;
+//			gucCurrentScreen = 6;
+//		}
+//	}
+//
+//	if(giScreenSwitch == 5)
+//	{
+//		giScreenTimeCount++;
+//		if(giScreenTimeCount > 100)
+//		{
+//			giScreenTimeCount = 0;
+//			giScreenSwitch = 6;
+//			gucCurrentScreen = 6;
+//			guiIconScreen=0;
+//		}
+//	}
+
+//	if(start_usb_detection==1)
+//	{
+//		usb_detection_count++;
+//		if(usb_detection_count>500)
+//		{
+//			usb_detection_count=0;
+//			start_usb_detection=0;
+//			check_usb_detection=1;
+//		}
+//	}
+}
+
+/*!
+ * @brief Main function
+ */
+
+unsigned int lucStatus = 0;
+
+int main(void)
+{
+    BOARD_ConfigMPU();
+    BOARD_InitBootPins();
+    BOARD_InitBootClocks();
+    BOARD_InitLcdifPixelClock();
+    BOARD_InitDebugConsole();
+    BOARD_InitLcd();
+    BOARD_InitGPT();
+
+//    USB_HostApplicationInit();
+//    funcCanaFrameConfigure();
+      funcKeypadConfig();
+//    funcJ1939Config();
+//    funcJ1939MailboxConfigure();
+      funcInitAdc();
+//	  funcRTCInit();
+//	  funcVariableInit();
+//    funcFreqCaptureInit();
+
+//    SDCardfuncBegin = funcdetectSDCard();
+//    SysTick_Config(SystemCoreClock / 100);
+//    while(1)
+//    {
+//		 USB_HostTaskFn(g_HostHandle);
+//		 USB_HostMsdTask(&g_MsdFatfsInstance);
+//    }
+
+		 AIN_SEL_IN1_HIGH;
+		 AIN_SEL_IN2_LOW;
+		 AIN_SEL_IN3_LOW;
+		 AIN_SEL_IN4_LOW;
+
+		 AIN_MUX_A0_LOW;
+		 AIN_MUX_A1_LOW;
+		 AIN_MUX_A2_LOW;
+
+    while(1)
+    {
+		 AIN_MUX_A0_LOW;
+		 AIN_MUX_A1_LOW;
+		 AIN_MUX_A2_LOW;
+
+		 lucStatus = funcreadADCValues(1);
+//    	PRINTF("ADC Value: %d\r\n",lucStatus);
+    }
+
+    funcWriteRTC();
+    delay_temp();
+
+    while(1)
+    {
+    	funcReadRTC();
+    	delay_temp();
+    }
+
+/*
+      while(1)
+      {
+    	if(SDCardfuncBegin==0)
+    	{
+    		error = f_mkdir(_T("/ABC"));
+
+    		if(error)
+    		{
+    			if (error == FR_EXIST)
+    			{
+    				error = f_opendir(&g_opendir,_T("/ABC"));
+    			}
+    		}
+
+    		error = f_open(&g_fileObject1, _T("/ABC/abcd.csv"), (FA_WRITE | FA_CREATE_NEW));
+
+    		if(error == FR_EXIST)
+    	    {
+    			error = f_open(&g_fileObject1, _T("/ABC/abcd.csv"),(FA_WRITE | FA_OPEN_EXISTING));
+    	    }
+
+    		f_write(&g_fileObject1,"2", 1,&bytesWritten);
+
+    		f_close(&g_fileObject1);
+    		f_closedir(&g_opendir);
+		}
+    }
+*/
+/*
+    while(1)
+    {
+    	GPIO_WritePinOutput(GPIO2, 20, 1);
+    	delay_temp();
+		GPIO_WritePinOutput(GPIO2, 20, 0);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 21, 1);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 21, 0);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 22, 1);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 22, 0);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 23, 1);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 23, 0);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 24, 1);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 24, 0);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 25, 1);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 25, 0);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 26, 1);
+		delay_temp();
+		GPIO_WritePinOutput(GPIO2, 26, 0);
+		delay_temp();
+    }
+*/
+
+
+    while(1)
+    {
+		if(bDM1RxComplete == 1)
+		{
+			bDM1RxComplete = 0;
+			funcLoadFaultToStruct(gucSa);
+			memset(&strCanbTp,0,sizeof(strCanbTp));
+			store_dm1_mesg=1;
+		}
+
+		funcDm1ScreenScroll();
+
+		gucKeyPressed = strKeypadStatus.normalPress;
+		funcProcessDisplayData();
+		gucKeyPressed = 0;
+		strKeypadStatus.normalPress = 0;
+
+		funcProcessAnalogInput();
+		funcProcessDigitalInput();
+		MainTask();
+
+		funcReadAdcChannels();
+		funcInputsThresholdDecisionMaking();
+
+		if(data_copied==0 && SDCardfuncBegin==0)
+		{
+			funcSdCardtest();
+		}
+		if(SDCardfuncBegin==1)
+		{
+#ifdef MIN_MAX_LOGGING_REQ
+			if(gisdcardpopup==1 && bStartRawFrameUsb==0 && bStartFaultFrameUsb==0 && bStartMinMaxFrameLog==0 && bStartRawFrameLog==0)
+			{
+				gisdcardstatus=1;
+			}
+			if(bStartRawFrameUsb==1 || bStartFaultFrameUsb==1 || bStartMinMaxFrameLog==1 || bStartRawFrameLog==1)
+			{
+				gisdcardpopup=1;
+
+				if( bStartRawFrameLog==1)
+				{
+					gisdcardstatus=3; //store error
+				}
+				else
+				{
+					gisdcardstatus=2; //error
+				}
+			}
+#else
+			if(gisdcardpopup==1 && bStartRawFrameUsb==0 && bStartFaultFrameUsb==0 && bStartDataLogging==0 && bStartRawFrameLog==0)
+			{
+				gisdcardstatus=1;
+			}
+			if(bStartRawFrameUsb==1 || bStartFaultFrameUsb==1 || bStartDataLogging==1 || bStartRawFrameLog==1)
+			{
+				gisdcardpopup=1;
+
+				if( bStartRawFrameLog==1)
+				{
+					gisdcardstatus=3; //store error
+				}
+				else
+				{
+					gisdcardstatus=2; //error
+				}
+			}
+#endif
+		}
+/*********************************************************************************************/
+		if(data_copied==1)  //copy to pendrive
+		{
+#ifdef MIN_MAX_LOGGING_REQ
+			if(sd_written == 1 && (bStartRawFrameUsb==1 || bStartFaultFrameUsb==1 || bStartMinMaxFrameLog==1))
+			{
+			   USB_HostInit(CONTROLLER_ID, &g_HostHandle, USB_HostEvent);
+			   sd_written = 0;
+			   usb_written = 1;
+//			   pendrive_check=0;
+			}
+#else
+			if(sd_written == 1 && (bStartRawFrameUsb==1 || bStartFaultFrameUsb==1 || bStartDataLogging==1))
+			{
+			   USB_HostInit(CONTROLLER_ID, &g_HostHandle, USB_HostEvent);
+			   sd_written = 0;
+			   usb_written = 1;
+//			   pendrive_check=0;
+			}
+#endif
+
+			 USB_HostTaskFn(g_HostHandle);
+			 USB_HostMsdTask(&g_MsdFatfsInstance);
+
+			if(usb_attached==1) //pendrive detected
+			{
+				guiPendriveStatus=1;
+				gucCopyStatus=1;
+				if(popeup_out_once==1)
+				{
+					popeup_out_once=0;
+					pendrivestatusstrttimer=1;
+				}
+				pendrive_counter_timeout=0;
+				pendrive_detected_timeout=0;
+				start_pendrive_timeout=0;
+				funcCopySdCardRawCanDatafileToUSB();
+				funcCopySdCardFaultCanDatafileToUSB();
+#ifdef MIN_MAX_LOGGING_REQ
+				funcCopySdCardMinMaxCanDatafileToUSB();
+#else
+				funcCopySdCardDataloggingCanDatafileToUSB();
+#endif
+				usb_attached=0;
+				data_copied=0;
+			}
+			else
+			{
+				if(pendrive_removed==1)
+				{
+					pendrive_removed=0;
+					guiPendrivePoPup=1;
+					gucCopyStatus=0;
+					usb_attached=0;
+					data_copied=0;
+				    Copyrawdataptr=0;
+				    Copyfaultdataptr=0;
+				    bStartRawFrameUsb=0;
+				    bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+				    bStartMinMaxFrameLog=0;
+				    CopyMinMaxdataptr=0;
+#else
+				    bStartDataLogging=0;
+				    CopyDataloggingdataptr=0;
+#endif
+				    guiPendriveStatus=3;
+				    pendrivestatusstrttimer=1;
+				    popeup_out_once=0;
+				    pendrive_check=1;
+				    gucRecordingStatus=0;
+//				    USB_HostDeinit(g_HostHandle);
+				}
+				if(pendrive_detected_timeout==1)
+				{
+					pendrive_detected_timeout=0;
+					guiPendriveStatus=0;
+					gucCopyStatus=0;
+					usb_attached=0;
+					data_copied=0;
+				    Copyrawdataptr=0;
+				    Copyfaultdataptr=0;
+				    bStartRawFrameUsb=0;
+				    bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+				    bStartMinMaxFrameLog=0;
+				    CopyMinMaxdataptr=0;
+#else
+				    bStartDataLogging=0;
+				    CopyDataloggingdataptr=0;
+#endif
+				    popeup_out_once=0;
+				    pendrive_check=1;
+				    gucRecordingStatus=0;
+//				    USB_HostDeinit(g_HostHandle);
+				}
+			}
+		}
+
+		if(pendrive_check==0 && data_copied==0)
+		{
+			if(giScreenSwitch==20 || giScreenSwitch==21 || giScreenSwitch==22)
+			{
+				 USB_HostTaskFn(g_HostHandle);
+				 USB_HostMsdTask(&g_MsdFatfsInstance);
+				 usb_written = 1;
+				 usb_attached=0;
+
+				if(pendrive_removed==1)
+				{
+					pendrive_removed=0;
+					guiPendrivePoPup=1;
+					gucCopyStatus=0;
+					usb_attached=0;
+					data_copied=0;
+					Copyrawdataptr=0;
+					Copyfaultdataptr=0;
+					bStartRawFrameUsb=0;
+					bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+					bStartMinMaxFrameLog=0;
+					CopyMinMaxdataptr=0;
+#else
+					bStartDataLogging=0;
+					CopyDataloggingdataptr=0;
+#endif
+					guiPendriveStatus=3;
+					pendrivestatusstrttimer=1;
+					popeup_out_once=0;
+					pendrive_check=2;
+					gucRecordingStatus=0;
+	//				USB_HostDeinit(g_HostHandle);
+				}
+			}
+			else
+			{
+				usb_attached=0;
+				data_copied=0;
+				Copyrawdataptr=0;
+				Copyfaultdataptr=0;
+				bStartRawFrameUsb=0;
+				bStartFaultFrameUsb=0;
+#ifdef MIN_MAX_LOGGING_REQ
+				bStartMinMaxFrameLog=0;
+				CopyMinMaxdataptr=0;
+#else
+				bStartDataLogging=0;
+				CopyDataloggingdataptr=0;
+
+#endif
+				pendrive_check=2;
+				popeup_out_once=0;
+			}
+		}
+	}
+    return 0;
+}
+
+int funcSdCardApplication(void)
+{
+    const TCHAR driverNumberBuffer[3U] = {SDDISK + '0', ':', '/'};
+    volatile bool failedFlag           = false;
+    char ch                            = '0';
+
+    BYTE work[FF_MAX_SS];
+
+	   if (sdcardWaitCardInsert() != kStatus_Success)
+       {
+          return 1;
+       }
+
+       if (f_mount(&g_fileSystem, driverNumberBuffer, 0U))
+       {
+//           PRINTF("Mount volume failed.\r\n");
+           return 1;
+       }
+
+		#if (FF_FS_RPATH >= 2U)
+
+			error = f_chdrive((char const *)&driverNumberBuffer[0U]);
+
+			if (error)
+			{
+		//          PRINTF("Change drive failed.\r\n");
+				return 1;
+			}
+
+		#endif
+
+#if FF_USE_MKFS
+
+    PRINTF("\r\nMake file system......The time may be long if the card capacity is big.\r\n");
+
+    if (f_mkfs(driverNumberBuffer, 0, work, sizeof work))
+    {
+        PRINTF("Make file system failed.\r\n");
+
+        return 1;
+    }
+
+#endif /* FF_USE_MKFS */
+
+   		return 0;
+}
+
+static status_t sdcardWaitCardInsert(void)
+{
+   BOARD_SD_Config(&g_sd, NULL, BOARD_SDMMC_SD_HOST_IRQ_PRIORITY, NULL);
+
+   /* SD host init function */
+   if (SD_HostInit(&g_sd) != kStatus_Success)
+   {
+//	   PRINTF("\r\nSD host init fail\r\n");
+	   return kStatus_Fail;
+   }
+
+   /* wait card insert */
+
+   if (SD_PollingCardInsert(&g_sd, kSD_Inserted) == kStatus_Success)
+   {
+//	   PRINTF("\r\nCard inserted.\r\n");
+	   /* power off card */
+	   SD_SetCardPower(&g_sd, false);
+	   SD_SetCardPower(&g_sd, true);
+   }
+   else
+   {
+	   return kStatus_Fail;
+   }
+
+   return kStatus_Success;
+}
+
+void funcVariableInit(void)
+{
+    giScreenSwitch 		= 0;
+    giScreenTimeCount	= 0;
+    gcPowerOnExecute 	= 1;
+    power_on_SD=2;
+    SDCardfuncBegin = 0;
+
+    giIcon01 = 1;
+    giIcon02 = 1;
+    giIcon03 = 1;
+    giIcon04 = 1;
+    giIcon05 = 1;
+    giIcon06 = 1;
+    giIcon07 = 1;
+    giIcon08 = 1;
+    giIcon09 = 1;
+    giIcon10 = 1;
+    giIcon11 = 1;
+    giIcon12 = 1;
+    giIcon13 = 1;
+    giIcon14 = 1;
+    giIcon15 = 1;
+
+    bNightMode = 0;
+    bPrevMode  = 1;
+//    once = 1;
+//    del = 0;
+    del  = 2160;
+    once = 2160;
+    gucRecTimeCount = 30;
+
+    guiEngOilInterval = 250;
+    guiAirFilterInterval = 250;
+    guiHydOilInterval = 250;
+    guiSerEngInterval = 250;
+    guiSerMacInterval = 250;
+
+    guiEngOilNext = 250;
+    guiAirFilterNext = 250;
+    guiHydOilNext = 250;
+    guiSerEngNext = 250;
+    guiSerMacNext = 250;
+
+    guiEngOilRemain = 250;
+    guiAirFilterRemain = 250;
+    guiHydOilRemain = 250;
+    guiSerEngRemain = 250;
+    guiSerMacRemain = 250;
+
+//    start_usb_detection=0;
+    rawdatadatapt=0;
+    filedatapt=0;
+    Copyrawdataptr=0;
+    data_copied=0;
+    filefaultlogdatapt=0;
+    Copyfaultdataptr=0;
+    CopyMinMaxdataptr=0;
+    fileMinMaxlogdatapt=0;
+    fileDataloggingdatapt=0;
+    guiPendrivePoPup=0;
+    guiPendriveStatus=2;
+    pendrivestatuscounter=0;
+    pendrivestatusstrttimer=0;
+    pendrive_check=2;
+    giCloseOpenScreens=0;
+    CopyDataloggingdataptr=0;
+//    record_adjust_30sec_time_count=100;
+//    giScreenPrevSwitch=100;
+//    var=0;
+
+    start_data_logging_for_every_10min=1;
+
+	SECOND_ADDRESS=0x00;     /*Seconds*/
+	MINUTE_ADDRESS=0x01;     /*Minutes*/
+	HOUR_ADDRESS=0x02;       /*Hour*/
+	MONTH_ADDRESS=0x04;      /*Month*/
+	YEAR_ADDRESS=0x05;       /*Year*/
+	DAY_OF_WEEK_ADDRESS=0x06;    /*Day of the week*/
+	CTRL_STATUS_ADDRESS=0x07;
+	DATE_ADDRESS=0x03;
+	SET_12HOUR_AM=0x7F;
+	MASK_12HOUR=0x1F;
+	MASK_SECOND=0x7F;
+	MASK_MINUTE=0x7F;
+	MASK_DATE=0x3F;
+	MASK_MONTH=0x1F;
+	MASK_YEAR=0xFF;
+
+//    record_adjust_10min_time_count=1000;
+
+    memset(&strDM1LogPrev,	0,	sizeof(strDM1LogPrev));
+    memset(&strDM1Log,	0,	sizeof(strDM1LogPrev));
+    memset(g_bufferRead,'\0',sizeof(g_bufferRead));
+//    memset(filecopy,'\0',sizeof(filecopy));
+}
+
+void funcSdCardtest(void)
+{
+	if(gisdcardpopup==1)
+	{
+		gisdcardstatus=0;
+	}
+
+    if(power_on_SD==1)
+    {
+    	power_on_SD=0;
+#ifdef MIN_MAX_LOGGING_REQ
+    	error = f_unlink(_T("/EM1/MinMax.csv"));
+#else
+    	error = f_unlink(_T("/EM1/DataLogging.csv"));
+#endif
+    	error = f_unlink(_T("/EM1/Faultlog.csv"));
+    	error = f_unlink(_T("/EM1/RawCanData.csv"));
+    }
+
+    if(power_on_SD==0)
+    {
+		if(usb_written == 1)
+		{
+			usb_written = 0;
+			f_mount(&g_fileSystem, driverNumberBuffer2, 0U);
+			f_chdrive((char const *)&driverNumberBuffer2[0U]);
+		}
+		if(store_raw_can_data_sd_card==1)  //store raw can data into sd card
+		{
+			store_raw_can_data_sd_card=0;
+			funcstore30secrawcandataintosdcard();
+		}
+		if(store_dm1_mesg==1 && bStartRawFrameUsb==0 && bStartFaultFrameUsb==0) //store dm1 mesg into sd card
+		{
+			store_dm1_mesg=0;
+			funcstoreDM1faultmesgesintoSdcard();
+		}
+
+
+#ifdef MIN_MAX_LOGGING_REQ
+		if(data_copied==0 && bStartFaultFrameUsb==0 && bStartRawFrameUsb==0 && bStartMinMaxFrameLog==0) // store minmax into sd card
+		{
+			funcMinMaxErrorLog();
+		}
+#else
+		if(data_copied==0 && bStartFaultFrameUsb==0 && bStartRawFrameUsb==0 && bStartDataLogging==0) // store datalogging into sd card
+		{
+			if(data_logging_10min==1)
+			{
+				data_logging_10min=0;
+				funcDataLogging();
+				dataloggingcounter=0;
+				start_data_logging_for_every_10min=1;
+			}
+		}
+#endif
+		if(bStartRawFrameUsb==1 && data_copied==0 && bStartFaultFrameUsb==0)  //read RawCanData from SD card
+		{
+			funcReadRawDatafromSdCard();
+		}
+
+		if(bStartFaultFrameUsb==1 && data_copied==0 && bStartRawFrameUsb==0)   //read faultlog from SD card
+		{
+			funcReadFaultDatafromSdCard();
+		}
+
+#ifdef MIN_MAX_LOGGING_REQ
+		if(bStartMinMaxFrameLog==1 && data_copied==0 && bStartRawFrameUsb==0 && bStartFaultFrameUsb==0)
+		{
+			funcReadMinMaxfromSDcard();
+		}
+#else
+		if(bStartDataLogging==1 && data_copied==0 && bStartRawFrameUsb==0 && bStartFaultFrameUsb==0)
+		{
+			funcReadDataLogfromSdCard();
+		}
+#endif
+    }
+}
+
+void Store_Dmlog_Frame_From_Into_SDCard(void)
+{
+	uint16_t no_data_rcvd 	= 0;
+	uint16_t dataframenum 	= 0;
+	uint8_t	year			= 0;
+	uint8_t month			= 0;
+	uint8_t date			= 0;
+	uint8_t hour			= 0;
+	uint8_t minute			= 0;
+	uint8_t second			= 0;
+	uint8_t source_addr		= 0;
+	uint16_t full_year 		= 0;
+	uint8_t plugid 			= 0;
+	uint8_t status 			= 0;
+	uint8_t occurence_count = 0;
+	uint8_t lamp_status 	= 0;
+
+	uint8_t i = 0,j=0;
+	uint8_t file_write_buff[150] = {0};
+	uint32_t temp_spn_fmi = 0;
+	uint8_t buff_cntr = 0;
+	uint8_t *p_sa_str;
+	uint8_t status_str[10] = {0};
+	uint8_t *pstatus;
+	uint8_t *fault_description;
+	uint16_t array_size = 0;
+	uint16_t byte_cntr = 0;
+	uint8_t dmlog_frame_bytes[DM_LOG_FRAME_SIZE] = {0};
+
+    unsigned long  lulDecimalValues = 0;
+    Uchar8 lucFloatValue    = 0;
+    unsigned long lucTempLogData   = 0;
+//	uint32_t mem_addr = start_addr;
+
+    strfaultLoggingData.CltTempCurrentValueDEG   = gulAdcFloatData[A3_ECT];
+    strfaultLoggingData.EopCurrentValueKpa       = gulAdcFloatData[A1_EOP];
+    strfaultLoggingData.EngSpdCurrentValueRPM    = gulAdcFloatData[A16_ENG_RPM];
+    strfaultLoggingData.TopCurrentValueKpa       = gulAdcFloatData[A5_TOP];
+    strfaultLoggingData.EotCurrentValueDEG       = gulAdcFloatData[A2_EOT];
+    strfaultLoggingData.DisplayHoursRunHrs = giHourMeter;//(glHour_meterCanData / 20.0);
+    strfaultLoggingData.BatteryCurrentValueV = gfVolt;
+    strfaultLoggingData.ConverterOiltempCurrentValue = gfconvertedCot;
+
+	if(created_new==1)
+	{
+		uint8_t csv_header_make[]={"VIN:\n MAKE:\n MODEL:\n SERIAL NUMBER:\n UNIT NUMBER:\n DISPLAY DATE CODE: 081220201910\n IO MODULE FIRMWARE: 79.70.0175 V008 - BEML V003 \n DATE DOWNLOADED:\n"};
+		f_write(&g_fileObject1,csv_header_make, sizeof(csv_header_make),&bytesWritten); //csv_header
+		datapt+=sizeof(csv_header_make);
+		uint8_t csv_header[] = {" Year, Month, Day, Time, Source_Name, Plug_ID, Source_Address, Status, SPN, FMI, Occ_Count, Lamp_Status, Fault, Corrective_Action, Engine_Speed_RPM, Converter_Oil_temp, Transmission_Oil_Pressure, "
+				                "Engine_Oil_Pressure, Battery_Voltage, Engine_Coolant_temperature, Engine_Oil_temperature, Engine_Hours\n"};
+		f_write(&g_fileObject1,csv_header, sizeof(csv_header),&bytesWritten); //csv_header
+		created_new=0;
+		datapt+=sizeof(csv_header);
+	}
+	for(i=0;i<3;i++)
+	{
+		 for(j=0;j<32;j++)
+		 {
+			temp_spn_fmi=strDM1Log[i][j].SpnFmi;
+			spn=(temp_spn_fmi & 0x7FFFF);
+			 if((strDM1Log[i][j].Status!=strDM1LogPrev[i][j].Status) && spn!=0x7FFFF && spn!=0xFFFF && spn!=0x0000)
+			 {
+				year 			= (strDateTime.Year-2000);
+				month 			= strDateTime.Month;
+				date 			= strDateTime.Date;
+				hour 			= strDateTime.Hour;
+				minute 			= strDateTime.Minute;
+				second  		= strDateTime.Second;
+				source_addr     = strDM1Log[i][j].SourceAddress;
+				plugid          = strDM1Log[i][j].PlugId;
+				status          = strDM1Log[i][j].Status;
+
+				temp_spn_fmi=strDM1Log[i][j].SpnFmi;
+
+				spn=(temp_spn_fmi & 0x7FFFF);
+				fmi=(temp_spn_fmi>>19);
+
+				occurence_count=strDM1Log[i][j].OccuranceCount;
+				lamp_status 	=  1;				//dmlog_frame_bytes[13];
+				write_value_to_SDcard(0x14,0); //year 20
+				write_value_to_SDcard(year,",");
+				write_value_to_SDcard(month,",");
+				write_value_to_SDcard(date,",");
+				write_value_to_SDcard(hour,":");
+				write_value_to_SDcard(minute,":");
+				write_value_to_SDcard(second,",");
+				p_sa_str = source_addr_decode(source_addr);
+				write_string_to_SDcard(p_sa_str,",");
+				write_value_to_SDcard(plugid,",");
+				write_value_to_SDcard(source_addr,",");
+
+				if(status == 1)
+				{
+					memcpy(status_str,"Active",sizeof("Active"));
+					write_string_to_SDcard(status_str,",");
+				}
+				else
+				{
+					memcpy(status_str,"Inactive",sizeof("Inactive"));
+					write_string_to_SDcard(status_str,",");
+				}
+
+				write_value_to_SDcard(spn,",");
+				write_value_to_SDcard(fmi,",");
+				write_value_to_SDcard(occurence_count,",");
+				write_value_to_SDcard(lamp_status,",");
+				fault_description = spn_fmi_decode(spn,fmi);
+				write_string_to_SDcard(fault_description,",");
+
+			    lucTempLogData      = strfaultLoggingData.EngSpdCurrentValueRPM * 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+				lucTempLogData      = strfaultLoggingData.ConverterOiltempCurrentValue* 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+			    lucTempLogData      = strfaultLoggingData.TopCurrentValueKpa * 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+			    lucTempLogData      = strfaultLoggingData.EopCurrentValueKpa * 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+			    lucTempLogData      = strfaultLoggingData.BatteryCurrentValueV * 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+			    lucTempLogData      = strfaultLoggingData.CltTempCurrentValueDEG * 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+			    lucTempLogData      = strfaultLoggingData.EotCurrentValueDEG * 100;
+			    lulDecimalValues    = lucTempLogData/100;
+			    lucFloatValue       = lucTempLogData%100;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+			    lucTempLogData      = strfaultLoggingData.DisplayHoursRunHrs * 10;
+			    lulDecimalValues    = lucTempLogData/10;
+			    lucFloatValue       = lucTempLogData%10;
+
+			    funcfaultTempHextoAscii(lulDecimalValues);
+			    FuncfaultlogStringPrint(".");
+			    funcfaultTempHextoAscii(lucFloatValue);
+			    FuncfaultlogStringPrint(",");
+
+				f_write(&g_fileObject1,"\n",sizeof("\n"),&bytesWritten);
+				datapt+=sizeof("\n");
+				strDM1LogPrev[i][j].Status=strDM1Log[i][j].Status;
+			 }
+		 }
+	}
+}
+
+void write_value_to_SDcard(uint32_t hex_value,uint8_t *seperator)
+{
+	int8_t i = 0;
+	uint8_t j=0,no_of_byte = 0;
+	uint8_t temp_buff[10] = {0};
+
+	num_val = hex2ascii(hex_value);
+
+	for(i=num_val;i>0;)
+	{
+		temp_buff[j++] = conv_array[i-1];
+		if(num_val==1)
+		{
+			break;
+		}
+		else
+		temp_buff[j++] = conv_array[i-2];
+		i=i-2;
+	}
+
+	f_write(&g_fileObject1,temp_buff, num_val,&bytesWritten);
+	datapt+=num_val;
+	if(seperator!=0)
+	{
+		f_write(&g_fileObject1,seperator, 1,&bytesWritten);
+		datapt+=1;
+	}
+}
+
+void write_string_to_SDcard(uint8_t *pstr,uint8_t *seperator)
+{
+    if(*pstr!='\0')
+    {
+		f_write(&g_fileObject1,pstr, strlen(pstr),&bytesWritten);
+		datapt+=strlen(pstr);
+		if(seperator!=0)
+		{
+			f_write(&g_fileObject1,seperator, 1,&bytesWritten);
+			datapt+=1;
+		}
+    }
+    else
+    {
+    	f_write(&g_fileObject1,"\0", strlen("\0"),&bytesWritten);
+		datapt+=strlen("\0");
+		if(seperator!=0)
+		{
+			f_write(&g_fileObject1,seperator, 1,&bytesWritten);
+			datapt+=1;
+		}
+    }
+}
+
+void store_raw_can_data_into_sd_card(void)
+{
+	uint16_t frame_num = 0;
+	uint16_t byte_cntr = 0;
+	uint32_t pgn = 0;
+	uint8_t i = 0;
+	uint8_t char_data = 0;
+	uint32_t AddrAddTemp =0;
+	uint8_t rawcan_data_bytes[RAWCANDATA_FRAME_SIZE] = {0};
+	uint8_t raw_can_data_csv_header[] = {" PGN, D1, D2, D3, D4, D5, D6, D7, D8\n"};
+
+		if(raw_data_header==1)
+		{
+			raw_data_header=0;
+			f_write(&g_fileObject1,raw_can_data_csv_header,sizeof(raw_can_data_csv_header),&bytesWritten);
+			rawdatadatapt+=sizeof(raw_can_data_csv_header);
+		}
+
+		for (frame_num = 0;frame_num<guiLogFileSize;frame_num++)
+		{
+			for(byte_cntr = 0;byte_cntr<RAWCANDATA_FRAME_SIZE;byte_cntr++)
+			{
+				rawcan_data_bytes[byte_cntr] = TempArray[frame_num][byte_cntr];
+			}
+
+			pgn = rawcan_data_bytes[0];
+			pgn <<=8;
+			pgn |= rawcan_data_bytes[1];
+			pgn <<=8;
+			pgn |= rawcan_data_bytes[2];
+			pgn <<=8;
+			pgn |= rawcan_data_bytes[3];
+
+			for(i =0;i<8;i++)
+			{
+				can_data[i] = rawcan_data_bytes[4+i];
+			}
+
+			hex_display(pgn);
+			f_write(&g_fileObject1,hex_char,sizeof(hex_char),&bytesWritten);
+			rawdatadatapt+=sizeof(hex_char);
+			f_write(&g_fileObject1,",", 1,&bytesWritten);
+			rawdatadatapt+=1;
+			hex_buff(can_data);
+
+			for(i=0;i<16;i++)
+			{
+				char_data = can_ascii_buff[i];
+				f_write(&g_fileObject1,&char_data, 1,&bytesWritten);
+				rawdatadatapt+=1;
+
+				if(i%2!=0)
+				{
+					f_write(&g_fileObject1,",", 1,&bytesWritten);
+					rawdatadatapt+=1;
+				}
+			}
+
+			f_write(&g_fileObject1,"\n",sizeof("\n"),&bytesWritten);
+			rawdatadatapt+=sizeof("\n");
+			AddrAddTemp +=16;
+		}
+}
+uint8_t funcdetectSDCard(void)
+{
+    const TCHAR driverNumberBuffer2[3U] = {SDDISK + '0', ':', '/'};
+    volatile bool failedFlag           = false;
+    char ch                            = '0';
+    BYTE work[FF_MAX_SS];
+
+	   if (sdcardWaitCardInsert() != kStatus_Success)
+       {
+          return 1;
+       }
+
+       if (f_mount(&g_fileSystem, driverNumberBuffer2, 0U))
+       {
+    	   //PRINTF("Mount volume failed.\r\n");
+           return 1;
+       }
+
+	#if (FF_FS_RPATH >= 2U)
+		error = f_chdrive((char const *)&driverNumberBuffer2[0U]);
+		if (error)
+		{
+			//PRINTF("Change drive failed.\r\n");
+			return 1;
+		}
+	#endif
+
+#if FF_USE_MKFS
+
+    PRINTF("\r\nMake file system......The time may be long if the card capacity is big.\r\n");
+
+    if (f_mkfs(driverNumberBuffer2, 0, work, sizeof work))
+    {
+        PRINTF("Make file system failed.\r\n");
+//        SDCardfuncBegin=0;
+
+        return -1;
+    }
+
+#endif /* FF_USE_MKFS */
+//}
+
+    return 0;
+}
+
+void funcsdcardtrail(void)
+{
+    error = f_mkdir(_T("/SDCARD"));
+
+    if (error == FR_EXIST)
+    {
+	   error = f_opendir(&g_opendir,_T("/SDCARD"));
+    }
+
+    error = f_open(&g_fileObject1, _T("/SDCARD/sdcardtest.csv"), (FA_WRITE | FA_READ | FA_CREATE_NEW));
+
+    if(error == FR_EXIST)
+	{
+		error = f_open(&g_fileObject1, _T("/SDCARD/sdcardtest.csv"), (FA_WRITE | FA_READ | FA_OPEN_EXISTING));
+	}
+
+    f_lseek(&g_fileObject1, rawdatadatapt);
+    f_write(&g_fileObject1,"A",1,&bytesWritten);
+    f_close(&g_fileObject1);
+    f_closedir(&g_opendir);
+    rawdatadatapt++;
+}
+void funcstore30secrawcandataintosdcard(void)
+{
+	error = f_mkdir(_T("/EM1"));
+
+	if(error)
+	{
+		if (error == FR_EXIST)
+		{
+			error = f_opendir(&g_opendir,_T("/EM1"));
+		}
+	}
+
+	error = f_open(&g_fileObject1, _T("/EM1/RawCanData.csv"), (FA_WRITE | FA_READ | FA_CREATE_NEW));
+
+	if(error == FR_EXIST)
+    {
+		error = f_open(&g_fileObject1, _T("/EM1/RawCanData.csv"),(FA_WRITE | FA_READ | FA_OPEN_EXISTING));
+    }
+	else
+	{
+		rawdatadatapt=0;
+		raw_data_header=1;
+	}
+
+	f_lseek(&g_fileObject1, rawdatadatapt);
+	store_raw_can_data_into_sd_card();
+	f_close(&g_fileObject1);
+	f_closedir(&g_opendir);
+	gucRecordingStatus  = 2;
+	sd_written = 1;
+}
+
+void funcstoreDM1faultmesgesintoSdcard(void)
+{
+	error = f_mkdir(_T("/EM1"));
+
+	if(error)
+	{
+		if (error == FR_EXIST)
+		{
+			error = f_opendir(&g_opendir,_T("/EM1"));
+		}
+	}
+
+	error = f_open(&g_fileObject1, _T("/EM1/Faultlog.csv"), (FA_WRITE | FA_READ | FA_CREATE_NEW));
+
+	if (error == FR_EXIST)
+	{
+		error = f_open(&g_fileObject1, _T("/EM1/Faultlog.csv"), (FA_WRITE | FA_READ | FA_OPEN_EXISTING));
+	}
+	else
+	{
+		datapt=0;
+		created_new=1;
+	}
+
+	f_lseek(&g_fileObject1, datapt);
+	Store_Dmlog_Frame_From_Into_SDCard();
+	f_close(&g_fileObject1);
+	f_closedir(&g_opendir);
+	sd_written = 1;
+}
+
+void funcReadRawDatafromSdCard(void)
+{
+	unsigned int i=0;
+
+	count=0;
+	memset(g_bufferRead,'\0',sizeof(g_bufferRead));
+	error = f_opendir(&g_opendir,_T("/EM1"));
+	error = f_open(&g_fileObject1, _T("/EM1/RawCanData.csv"), (FA_READ | FA_OPEN_EXISTING));
+
+	if(error==FR_OK)
+	{
+		f_lseek(&g_fileObject1, Copyrawdataptr);
+		f_read(&g_fileObject1,g_bufferRead,sizeof(g_bufferRead),&bytesRead);
+		Copyrawdataptr+=sizeof(g_bufferRead);
+
+		for(i=0;i<sizeof(g_bufferRead);i++)
+		{
+			if(g_bufferRead[i]=='\0')
+			{
+				count++;
+			}
+		}
+
+		if(count>=(BUFFER_SIZE-1))
+		{
+			count=0;
+			file_close=1;
+			Copyrawdataptr=0;
+		}
+		else
+		{
+			count=0;
+		}
+
+		f_close(&g_fileObject1);
+		f_closedir(&g_opendir);
+		sd_written = 1;
+		data_copied=1;
+	}
+	else
+	{
+		guiPendriveStatus=4;
+	    bStartRawFrameUsb=0;
+	}
+}
+void funcReadFaultDatafromSdCard(void)
+{
+	unsigned int i=0;
+	count=0;
+	memset(g_bufferRead,'\0',sizeof(g_bufferRead));
+	error = f_opendir(&g_opendir,_T("/EM1"));
+	error = f_open(&g_fileObject1, _T("/EM1/Faultlog.csv"), (FA_READ | FA_OPEN_EXISTING));
+
+	if(error==FR_OK)
+	{
+		f_lseek(&g_fileObject1, Copyfaultdataptr);
+		f_read(&g_fileObject1,g_bufferRead,sizeof(g_bufferRead),&bytesRead);
+		Copyfaultdataptr+=sizeof(g_bufferRead);
+
+		for(i=0;i<sizeof(g_bufferRead);i++)
+		{
+			if(g_bufferRead[i]=='\0')
+			{
+				count++;
+			}
+		}
+
+		if(count>=(BUFFER_SIZE-1))
+		{
+			count=0;
+			file_close=1;
+			Copyfaultdataptr=0;
+		}
+		else
+		{
+			count=0;
+		}
+
+		f_close(&g_fileObject1);
+		f_closedir(&g_opendir);
+		sd_written = 1;
+		data_copied=1;
+	}
+
+}
+
+void funcWriteMinMaxToSdCard(void)
+{
+	error = f_mkdir(_T("/EM1"));
+
+	if(error)
+	{
+		if (error == FR_EXIST)
+		{
+			error = f_opendir(&g_opendir,_T("/EM1"));
+		}
+	}
+
+	error = f_open(&g_fileObject1, _T("/EM1/MinMax.csv"), (FA_WRITE | FA_READ | FA_CREATE_NEW));
+
+	if(error == FR_EXIST)
+    {
+		error = f_open(&g_fileObject1, _T("/EM1/MinMax.csv"),(FA_WRITE | FA_READ | FA_OPEN_EXISTING));
+    }
+	else
+	{
+		minmaxdatapt=0;
+		minmaxheader=1;
+	}
+
+	f_lseek(&g_fileObject1, minmaxdatapt);
+	store_minmax_to_sd_card(strMinMaxDataFrame);
+	f_close(&g_fileObject1);
+	f_closedir(&g_opendir);
+	sd_written = 1;
+}
+
+void funcWriteDataloggingToSdCard(void)
+{
+	error = f_mkdir(_T("/EM1"));
+
+	if(error)
+	{
+		if (error == FR_EXIST)
+		{
+			error = f_opendir(&g_opendir,_T("/EM1"));
+		}
+	}
+
+	error = f_open(&g_fileObject1, _T("/EM1/DataLogging.csv"), (FA_WRITE | FA_READ | FA_CREATE_NEW));
+
+	if(error == FR_EXIST)
+    {
+		error = f_open(&g_fileObject1, _T("/EM1/DataLogging.csv"),(FA_WRITE | FA_READ | FA_OPEN_EXISTING));
+    }
+	else
+	{
+		Dataloggingdatapt=0;
+		Dataloggingheader=1;
+	}
+
+	f_lseek(&g_fileObject1, Dataloggingdatapt);
+	store_Datalogging_to_sd_card(strDataLoggingFrame);
+	f_close(&g_fileObject1);
+	f_closedir(&g_opendir);
+	sd_written = 1;
+}
+
+
+void store_minmax_to_sd_card(struct MinMaxLogRegister strMinMaxLogData)
+{
+    unsigned long  lulDecimalValues = 0;
+    Uchar8 lucFloatValue    = 0;
+    unsigned long lucTempLogData   = 0;
+    Uchar8 lucTempDataBuff  = 0;
+	uint8_t	year			= 0;
+	uint8_t month			= 0;
+	uint8_t date			= 0;
+	uint8_t hour			= 0;
+	uint8_t minute			= 0;
+	uint8_t second			= 0;
+
+	uint8_t vehicle_model[10] ={0};
+	uint8_t display_date_code_no[13] = {0};
+	uint8_t io_mod_firm_ver[30] = {0};
+
+
+//	uint8_t minmaxlog_csv_header0[] = {" Log_entry:"};
+//	uint8_t minmaxlog_csv_header1[] = {", Date, Time, Display_Hours_Run_Hrs, Parameter, Error Type,"
+//                "CoolantTemp_MaxValue_DEG,CoolantTemp_CurrentValue_DEG, CoolantTemp_MinValue_DEG, "
+//                "Engine_Oil_Pressure_MaxValue_HighIdle_kPa, Engine_Oil_Pressure_Current_kPa, Engine_Oil_Pressure_MinValue_HighIdle_kPa,"
+//                "Engine_Speed_MaxValue_RPM, Engine_Speed_CurrentValue_RPM, Engine_Speed_AvgValue_RPM,"
+//                "Transmission_Oil_Pressure_MaxValue_kPa,  Transmission_Oil_Pressure_CurrentValue_kPa, Transmission_Oil_Pressure_MinValue_kPa, "
+//                "Transmission_Oil_Temp_MaxValue_DEG, Transmission_Oil_Temp_CurrentValue_DEG, Transmission_Oil_Temp_MinValue_DEG,"
+//                "Hydraulic_Retarder_Oil_Temp_MaxValue_DEG, Hydraulic_Retarder_Oil_Temp_CurrentValue_DEG, Hydraulic_Retarder_Oil_Temp_MinValue_DEG, "
+//                "Vehicle_Speed_MaxValue_Kmph, Vehicle_Speed_CurrentValue_Kmph,"
+//                "EngineOilTemp_MaxValue_DEG, EngineOilTemp_CurrentValue_DEG, EngineOilTemp_MinValue_DEG,"
+//                "Air_Pressure_MaxValue_kPa, Air_Pressure_CurrentValue_kPa, Air_Pressure_MinValue_kPa, "
+//                "Steering_Oil_Temp_MaxValue_DEG, Steering_Oil_Temp_CurrentValue_DEG, Steering_Oil_Temp_MinValue_DEG\n"};
+//
+//	memcpy(vehicle_model,"BH100",sizeof("BH100"));
+//	memcpy(display_date_code_no,"181020210210",sizeof("181020210210"));
+//	memcpy(io_mod_firm_ver,"V1.0.0 A - BH100",sizeof("V1.0.0 A - BH100"));
+
+	year 			= (strDateTime.Year-2000);
+	month 			= strDateTime.Month;
+	date 			= strDateTime.Date;
+	hour 			= strDateTime.Hour;
+	minute 			= strDateTime.Minute;
+	second  		= strDateTime.Second;
+
+   if(minmaxheader==1)
+   {
+	    minmaxheader=0;
+        FuncStringPrint("VIN:\n");
+        FuncStringPrint("MAKE:\n");
+        FuncStringPrint("MODEL:\n");
+        FuncStringPrint("UNIT NUMBER:\n");
+        FuncStringPrint("DISPLAY DATE CODE\n");
+        FuncStringPrint("IO MODULE FIRMWARE:\n");
+        FuncStringPrint("DATE DOWNLOADED(DD/MM/YYYY:\n");
+        FuncStringPrint(", Date, Time, Display_Hours_Run_Hrs, Parameter, Error Type,"
+                "CoolantTemp_MaxValue_DEG,CoolantTemp_CurrentValue_DEG, CoolantTemp_MinValue_DEG, "
+                "Engine_Oil_Pressure_MaxValue_HighIdle_kPa, Engine_Oil_Pressure_Current_kPa, Engine_Oil_Pressure_MinValue_HighIdle_kPa,"
+                "Engine_Speed_MaxValue_RPM, Engine_Speed_CurrentValue_RPM, Engine_Speed_AvgValue_RPM,"
+                "Transmission_Oil_Pressure_MaxValue_kPa,  Transmission_Oil_Pressure_CurrentValue_kPa, Transmission_Oil_Pressure_MinValue_kPa, "
+                "Transmission_Oil_Temp_MaxValue_DEG, Transmission_Oil_Temp_CurrentValue_DEG, Transmission_Oil_Temp_MinValue_DEG,"
+                "Hydraulic_Retarder_Oil_Temp_MaxValue_DEG, Hydraulic_Retarder_Oil_Temp_CurrentValue_DEG, Hydraulic_Retarder_Oil_Temp_MinValue_DEG, "
+                "Vehicle_Speed_MaxValue_Kmph, Vehicle_Speed_CurrentValue_Kmph,"
+                "EngineOilTemp_MaxValue_DEG, EngineOilTemp_CurrentValue_DEG, EngineOilTemp_MinValue_DEG,"
+                "Air_Pressure_MaxValue_kPa, Air_Pressure_CurrentValue_kPa, Air_Pressure_MinValue_kPa, "
+                "Steering_Oil_Temp_MaxValue_DEG, Steering_Oil_Temp_CurrentValue_DEG, Steering_Oil_Temp_MinValue_DEG\n");
+   }
+
+    log_no++;
+
+    FuncStringPrint("Log Entry: ");
+    funcTempHextoAscii(log_no);
+    FuncStringPrint("\n");
+    FuncStringPrint(",");
+
+    /* Date */
+    lucTempDataBuff = (date);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint("/");
+    lucTempDataBuff = (month);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint("/");
+    lucTempDataBuff = (year);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(",");
+
+    /* Time */
+    lucTempDataBuff = (hour);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(":");
+    lucTempDataBuff = (minute);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(":");
+    lucTempDataBuff = (second);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(",");
+
+    /* Display hours */
+    lucTempLogData      = strMinMaxLogData.DisplayHoursRunHrs * 10;
+    lulDecimalValues    = lucTempLogData/10;
+    lucFloatValue       = lucTempLogData%10;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    funcPrintParameterType(strMinMaxLogData.ParameterType);
+    FuncStringPrint(",");
+
+    funcPrintErrorType(strMinMaxLogData.ErrorType);
+    FuncStringPrint(",");
+
+    /* Coolant temperature */
+
+    lucTempLogData      = strMinMaxLogData.CltTempMaxValueTHDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.CltTempCurrentValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.CltTempMinValueTHDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* EOP */
+    lucTempLogData      = strMinMaxLogData.EopMaxValueHighIdleTHKKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.EopCurrentValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.EopMinValueHighIdleTHKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* Engine RPM */
+    lucTempLogData      = strMinMaxLogData.EngSpdMaxValueRPM * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.EngSpdCurrentValueRPM * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.EngSpdAvgValueRPM * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+
+
+    /* TOP */
+    lucTempLogData      = strMinMaxLogData.TopMaxValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.TopCurrentValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.TopMinValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* TOT */
+    lucTempLogData      = strMinMaxLogData.TotMaxValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.TotCurrenrvalueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.TotMinValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* HROT */
+    lucTempLogData      =     strMinMaxLogData.HrotMaxValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.HrotCurentValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      =  strMinMaxLogData.HrotMinValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* Vehicle/Road Speed */
+    lucTempLogData      = strMinMaxLogData.VehSpdMaxValueKmph * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.VehSpdCurrentValueKmph * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+    /* EOT */
+    lucTempLogData      = strMinMaxLogData.EotMaxValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.EotCurrentValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.EotMinValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* AP */
+    lucTempLogData      = strMinMaxLogData.ApMaxValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.ApCurrentValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.ApMinValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    /* SOT */
+    lucTempLogData      = strMinMaxLogData.SotMaxValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.SotCurrentValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strMinMaxLogData.SotMinValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+    FuncStringPrint("\n");
+}
+
+void store_Datalogging_to_sd_card(struct MinMaxLogRegister strDataLoggingData)
+{
+    unsigned long  lulDecimalValues = 0;
+    Uchar8 lucFloatValue    = 0;
+    unsigned long lucTempLogData   = 0;
+    Uchar8 lucTempDataBuff  = 0;
+	uint8_t	year			= 0;
+	uint8_t month			= 0;
+	uint8_t date			= 0;
+	uint8_t hour			= 0;
+	uint8_t minute			= 0;
+	uint8_t second			= 0;
+
+	uint8_t vehicle_model[10] ={0};
+	uint8_t display_date_code_no[13] = {0};
+	uint8_t io_mod_firm_ver[30] = {0};
+
+
+//	uint8_t minmaxlog_csv_header0[] = {" Log_entry:"};
+//	uint8_t minmaxlog_csv_header1[] = {", Date, Time, Display_Hours_Run_Hrs, Parameter, Error Type,"
+//                "CoolantTemp_MaxValue_DEG,CoolantTemp_CurrentValue_DEG, CoolantTemp_MinValue_DEG, "
+//                "Engine_Oil_Pressure_MaxValue_HighIdle_kPa, Engine_Oil_Pressure_Current_kPa, Engine_Oil_Pressure_MinValue_HighIdle_kPa,"
+//                "Engine_Speed_MaxValue_RPM, Engine_Speed_CurrentValue_RPM, Engine_Speed_AvgValue_RPM,"
+//                "Transmission_Oil_Pressure_MaxValue_kPa,  Transmission_Oil_Pressure_CurrentValue_kPa, Transmission_Oil_Pressure_MinValue_kPa, "
+//                "Transmission_Oil_Temp_MaxValue_DEG, Transmission_Oil_Temp_CurrentValue_DEG, Transmission_Oil_Temp_MinValue_DEG,"
+//                "Hydraulic_Retarder_Oil_Temp_MaxValue_DEG, Hydraulic_Retarder_Oil_Temp_CurrentValue_DEG, Hydraulic_Retarder_Oil_Temp_MinValue_DEG, "
+//                "Vehicle_Speed_MaxValue_Kmph, Vehicle_Speed_CurrentValue_Kmph,"
+//                "EngineOilTemp_MaxValue_DEG, EngineOilTemp_CurrentValue_DEG, EngineOilTemp_MinValue_DEG,"
+//                "Air_Pressure_MaxValue_kPa, Air_Pressure_CurrentValue_kPa, Air_Pressure_MinValue_kPa, "
+//                "Steering_Oil_Temp_MaxValue_DEG, Steering_Oil_Temp_CurrentValue_DEG, Steering_Oil_Temp_MinValue_DEG\n"};
+//
+//	memcpy(vehicle_model,"BH100",sizeof("BH100"));
+//	memcpy(display_date_code_no,"181020210210",sizeof("181020210210"));
+//	memcpy(io_mod_firm_ver,"V1.0.0 A - BH100",sizeof("V1.0.0 A - BH100"));
+
+	year 			= (strDateTime.Year-2000);
+	month 			= strDateTime.Month;
+	date 			= strDateTime.Date;
+	hour 			= strDateTime.Hour;
+	minute 			= strDateTime.Minute;
+	second  		= strDateTime.Second;
+
+   if(Dataloggingheader==1)
+   {
+	    Dataloggingheader=0;
+        FuncStringPrint("VIN:\n");
+        FuncStringPrint("MAKE:\n");
+        FuncStringPrint("MODEL:\n");
+        FuncStringPrint("UNIT NUMBER:\n");
+        FuncStringPrint("DISPLAY DATE CODE\n");
+        FuncStringPrint("IO MODULE FIRMWARE:\n");
+        FuncStringPrint("DATE DOWNLOADED(DD/MM/YYYY):\n");
+        FuncStringPrint(", Date, Time, Display_Hours_Run_Hrs, "
+                "CoolantTemp_CurrentValue_DEG, "
+                "Engine_Oil_Pressure_Current_kPa, "
+                "Engine_Speed_CurrentValue_RPM, "
+                "Transmission_Oil_Pressure_CurrentValue_kPa, "
+        		"Fuel_Level_Percentage, "
+        		"Battery_Voltage_Volt, "
+        		"Converter_Oil_temperature_DEG, "
+//                "Transmission_Oil_Temp_CurrentValue_DEG, "
+//                "Hydraulic_Retarder_Oil_Temp_CurrentValue_DEG, "
+                "Vehicle_Speed_CurrentValue_Kmph, "
+                "EngineOilTemp_CurrentValue_DEG, ");
+//               "Air_Pressure_CurrentValue_kPa, "
+//                "Steering_Oil_Temp_CurrentValue_DEG, ");
+        FuncStringPrint("\n");
+   }
+
+
+
+    log_no++;
+
+    FuncStringPrint("Log Entry: ");
+    funcTempHextoAscii(log_no);
+    FuncStringPrint("\n");
+    FuncStringPrint(",");
+
+    /* Date */
+    lucTempDataBuff = (date);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint("/");
+    lucTempDataBuff = (month);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint("/");
+    lucTempDataBuff = (year);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(",");
+
+    /* Time */
+    lucTempDataBuff = (hour);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(":");
+    lucTempDataBuff = (minute);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(":");
+    lucTempDataBuff = (second);
+    funcTempHextoAscii((lucTempDataBuff));
+    FuncStringPrint(",");
+
+    /* Display hours */
+    lucTempLogData      = strDataLoggingData.DisplayHoursRunHrs * 10;
+    lulDecimalValues    = lucTempLogData/10;
+    lucFloatValue       = lucTempLogData%10;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+//    funcPrintParameterType(strDataLoggingData.ParameterType);
+//    FuncStringPrint(",");
+//
+//    funcPrintErrorType(strDataLoggingData.ErrorType);
+//    FuncStringPrint(",");
+
+    /* Coolant temperature */
+
+//    lucTempLogData      = strDataLoggingData.CltTempMaxValueTHDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.CltTempCurrentValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.CltTempMinValueTHDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    /* EOP */
+//    lucTempLogData      = strDataLoggingData.EopMaxValueHighIdleTHKKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.EopCurrentValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.EopMinValueHighIdleTHKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    /* Engine RPM */
+//    lucTempLogData      = strDataLoggingData.EngSpdMaxValueRPM * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.EngSpdCurrentValueRPM * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+
+//    lucTempLogData      = strDataLoggingData.EngSpdAvgValueRPM * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+
+
+    /* TOP */
+//    lucTempLogData      = strDataLoggingData.TopMaxValueKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.TopCurrentValueKpa * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.FuellvlCurrentValuePer * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.BatteryCurrentValueV * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.ConverterOiltempCurrentValue* 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+
+//    lucTempLogData      = strDataLoggingData.TopMinValueKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    /* TOT */
+/*
+    lucTempLogData      = strDataLoggingData.TotMaxValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.TotCurrenrvalueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.TotMinValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+*/
+
+    /* HROT */
+//    lucTempLogData      =     strDataLoggingData.HrotMaxValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.HrotCurentValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+//    lucTempLogData      =  strDataLoggingData.HrotMinValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    /* Vehicle/Road Speed */
+//    lucTempLogData      = strDataLoggingData.VehSpdMaxValueKmph * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.VehSpdCurrentValueKmph * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+    /* EOT */
+//    lucTempLogData      = strDataLoggingData.EotMaxValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    lucTempLogData      = strDataLoggingData.EotCurrentValueDEG * 100;
+    lulDecimalValues    = lucTempLogData/100;
+    lucFloatValue       = lucTempLogData%100;
+
+    funcTempHextoAscii(lulDecimalValues);
+    FuncStringPrint(".");
+    funcTempHextoAscii(lucFloatValue);
+    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.EotMinValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+    /* AP */
+//    lucTempLogData      = strDataLoggingData.ApMaxValueKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.ApCurrentValueKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.ApMinValueKpa * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+//
+//    /* SOT */
+//    lucTempLogData      = strDataLoggingData.SotMaxValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.SotCurrentValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+
+//    lucTempLogData      = strDataLoggingData.SotMinValueDEG * 100;
+//    lulDecimalValues    = lucTempLogData/100;
+//    lucFloatValue       = lucTempLogData%100;
+//
+//    funcTempHextoAscii(lulDecimalValues);
+//    FuncStringPrint(".");
+//    funcTempHextoAscii(lucFloatValue);
+//    FuncStringPrint(",");
+    FuncStringPrint("\n");
+
+
+}
+
+
+void FuncStringPrint(uint8_t *puidata)
+{
+    if(*puidata !='\0')
+    {
+		f_write(&g_fileObject1,puidata,strlen(puidata),&bytesWritten);
+#ifdef MIN_MAX_LOGGING_REQ
+		minmaxdatapt+=strlen(puidata);
+#else
+		Dataloggingdatapt+=strlen(puidata);
+#endif
+    }
+    else
+    {
+    	f_write(&g_fileObject1,"\0",strlen("\0"),&bytesWritten);
+#ifdef MIN_MAX_LOGGING_REQ
+    	minmaxdatapt+=strlen("\0");
+#else
+    	Dataloggingdatapt+=strlen("\0");
+#endif
+    }
+}
+
+void FuncfaultlogStringPrint(uint8_t *puidata)
+{
+    if(*puidata !='\0')
+    {
+		f_write(&g_fileObject1,puidata,strlen(puidata),&bytesWritten);
+		datapt+=strlen(puidata);
+    }
+    else
+    {
+    	f_write(&g_fileObject1,"\0",strlen("\0"),&bytesWritten);
+    	datapt+=strlen("\0");
+    }
+}
+
+void funcPrintParameterType(Uchar8 lucParameterType)
+{
+    switch(lucParameterType)
+    {
+    case A1_EOP:
+        FuncStringPrint("A1_EOP");
+        break;
+
+    case A2_EOT:
+        FuncStringPrint("A2_EOT");
+        break;
+
+    case A3_ECT:
+        FuncStringPrint("A3_ECT");
+        break;
+
+    case A4_TOT:
+        FuncStringPrint("A4_TOT");
+        break;
+
+    case A5_TOP:
+        FuncStringPrint("A5_TOP");
+        break;
+
+    case A6_FL:
+        FuncStringPrint("A6_FL");
+        break;
+
+    case A13_BCAP1:
+        FuncStringPrint("A13_BCAP1");
+        break;
+
+    case A14_BCAP2:
+        FuncStringPrint("A14_BCAP2");
+        break;
+
+    case PWR_IN_IO:
+        FuncStringPrint("PWR_IN_IO");
+        break;
+
+    case A16_ENG_RPM:
+        FuncStringPrint("A16_ENG_RPM");
+        break;
+
+    case A17_ROAD_SPD:
+        FuncStringPrint("A17_ROAD_SPD");
+        break;
+
+    default:
+        FuncStringPrint("NA");
+        break;
+    }
+}
+void funcPrintErrorType(Uchar8 lucErrorType)
+{
+    switch(lucErrorType)
+    {
+    case ERROR_STATUS_NORMAL:
+        FuncStringPrint("NORMAL");
+        break;
+
+    case ERROR_STATUS_OPEN:
+        FuncStringPrint("ERROR OPEN");
+        break;
+
+    case ERROR_STATUS_HIGH:
+        FuncStringPrint("ERROR HIGH");
+        break;
+
+    case ERROR_STATUS_LOW:
+        FuncStringPrint("ERROR LOW");
+        break;
+
+    case ERROR_STATUS_SHORT:
+        FuncStringPrint("ERROR SHORT");
+        break;
+
+    default:
+        FuncStringPrint("NA");
+        break;
+    }
+}
+void funcTempHextoAscii(Uint32 luiHexValue)
+{
+    int8_t lucValue,lucCounter,lucArray[10];
+    lucCounter = 1;
+    uint8_t  temp_array[10],i=0;
+
+    memset(temp_array,'\0',sizeof(temp_array));
+    memset(lucArray,'\0',sizeof(lucArray));
+
+    if(luiHexValue==0)
+    {
+		f_write(&g_fileObject1,"0",1,&bytesWritten);
+#ifdef MIN_MAX_LOGGING_REQ
+		minmaxdatapt+=1;
+#else
+		Dataloggingdatapt+=1;
+#endif
+    }
+    else
+    {
+		while(luiHexValue >= 10)
+		{
+			lucValue = luiHexValue % 10;
+			luiHexValue =luiHexValue/10;
+			lucArray[lucCounter++]  = lucValue+0x30;
+		}
+
+		lucArray[lucCounter++]=luiHexValue+0x30;
+
+		i=0;
+		while(lucCounter>=0)
+		{
+			temp_array [i]= lucArray[lucCounter-1];
+			i++;
+			lucCounter--;
+		}
+		temp_array[i]='\0';
+
+	//    while(lucCounter > 1)
+	//    {
+	//        lucCounter--;
+	////        FuncStringPrint(lucArray[lucCounter]);
+	//    }
+
+		f_write(&g_fileObject1,temp_array,(i-1),&bytesWritten);
+#ifdef MIN_MAX_LOGGING_REQ
+		minmaxdatapt+=(i-1);
+#else
+		Dataloggingdatapt+=(i-1);
+#endif
+    }
+}
+
+void funcfaultTempHextoAscii(Uint32 luiHexValue)
+{
+	   int8_t lucValue,lucCounter,lucArray[10];
+	   lucCounter = 1;
+	   uint8_t  temp_array[10],i=0;
+
+	    memset(temp_array,'\0',sizeof(temp_array));
+	    memset(lucArray,'\0',sizeof(lucArray));
+
+	    if(luiHexValue==0)
+	    {
+			f_write(&g_fileObject1,"0",1,&bytesWritten);
+			datapt+=1;
+	    }
+	    else
+	    {
+			while(luiHexValue >= 10)
+			{
+				lucValue = luiHexValue % 10;
+				luiHexValue =luiHexValue/10;
+				lucArray[lucCounter++]  = lucValue+0x30;
+			}
+
+			lucArray[lucCounter++]=luiHexValue+0x30;
+			i=0;
+			while(lucCounter>=0)
+			{
+				temp_array [i]= lucArray[lucCounter-1];
+				i++;
+				lucCounter--;
+			}
+			temp_array[i]='\0';
+
+			f_write(&g_fileObject1,temp_array,(i-1),&bytesWritten);
+			datapt+=(i-1);
+	    }
+}
+
+
+void funcReadMinMaxfromSDcard(void)
+{
+	unsigned int i=0;
+	count=0;
+	memset(g_bufferRead,'\0',sizeof(g_bufferRead));
+	error = f_opendir(&g_opendir,_T("/EM1"));
+	error = f_open(&g_fileObject1, _T("/EM1/MinMax.csv"), (FA_READ | FA_OPEN_EXISTING));
+
+	if(error==FR_OK)
+	{
+		f_lseek(&g_fileObject1,CopyMinMaxdataptr);
+		f_read(&g_fileObject1,g_bufferRead,sizeof(g_bufferRead),&bytesRead);
+		CopyMinMaxdataptr+=sizeof(g_bufferRead);
+
+		for(i=0;i<sizeof(g_bufferRead);i++)
+		{
+			if(g_bufferRead[i]=='\0')
+			{
+				count++;
+			}
+		}
+
+		if(count>=(BUFFER_SIZE-1))
+		{
+			count=0;
+			file_close=1;
+			CopyMinMaxdataptr=0;
+		}
+		else
+		{
+			count=0;
+		}
+
+		f_close(&g_fileObject1);
+		f_closedir(&g_opendir);
+		sd_written = 1;
+		data_copied=1;
+	}
+}
+
+void funcReadDataLogfromSdCard(void)
+{
+	unsigned int i=0;
+	count=0;
+	memset(g_bufferRead,'\0',sizeof(g_bufferRead));
+	error = f_opendir(&g_opendir,_T("/EM1"));
+	error = f_open(&g_fileObject1, _T("/EM1/DataLogging.csv"), (FA_READ | FA_OPEN_EXISTING));
+
+	if(error==FR_OK)
+	{
+		f_lseek(&g_fileObject1,CopyDataloggingdataptr);
+		f_read(&g_fileObject1,g_bufferRead,sizeof(g_bufferRead),&bytesRead);
+		CopyDataloggingdataptr+=sizeof(g_bufferRead);
+
+		for(i=0;i<sizeof(g_bufferRead);i++)
+		{
+			if(g_bufferRead[i]=='\0')
+			{
+				count++;
+			}
+		}
+
+		if(count>=(BUFFER_SIZE-1))
+		{
+			count=0;
+			file_close=1;
+			CopyDataloggingdataptr=0;
+		}
+		else
+		{
+			count=0;
+		}
+
+		f_close(&g_fileObject1);
+		f_closedir(&g_opendir);
+		sd_written = 1;
+		data_copied=1;
+	}
+	else
+	{
+		guiPendriveStatus=4;
+		bStartDataLogging=0;
+	}
+}
+
+void funcInitAdc(void)
+{
+    ADC_GetDefaultConfig(&adcConfigStrcut);
+    ADC_Init(ADC_BASE, &adcConfigStrcut);
+#if !(defined(FSL_FEATURE_ADC_SUPPORT_HARDWARE_TRIGGER_REMOVE) && FSL_FEATURE_ADC_SUPPORT_HARDWARE_TRIGGER_REMOVE)
+    ADC_EnableHardwareTrigger(ADC_BASE, false);
+#endif
+
+    /* Do auto hardware calibration. */
+    if (kStatus_Success == ADC_DoAutoCalibration(ADC_BASE))
+    {
+//        PRINTF("ADC_DoAutoCalibration() Done.\r\n");
+    }
+    else
+    {
+//        PRINTF("ADC_DoAutoCalibration() Failed.\r\n");
+    }
+}
+
+unsigned int funcreadADCValues(unsigned int channel_number)
+{
+	unsigned int delayi=0;
+	unsigned int delayj=0;
+	unsigned long avg_cnt=0;
+	unsigned long temp_adc=0;
+	unsigned int avg_adc=0;
+
+    /* Configure the user channel and interrupt. */
+    adcChannelConfigStruct.channelNumber                        = channel_number;
+    adcChannelConfigStruct.enableInterruptOnConversionCompleted = false;
+
+    temp_adc=0;
+	avg_cnt=0;
+
+    while(avg_cnt<1000)
+    {
+        ADC_SetChannelConfig(ADC_BASE,ADC_CHANNEL_GROUP,&adcChannelConfigStruct);
+        while (0U == ADC_GetChannelStatusFlags(ADC_BASE,ADC_CHANNEL_GROUP))
+        {
+
+        }
+
+        temp_adc+=ADC_GetChannelConversionValue(ADC_BASE,ADC_CHANNEL_GROUP);
+        avg_cnt++;
+    }
+
+    avg_adc=(temp_adc/avg_cnt);
+
+ //   PRINTF("ADC Value: %d\r\n",avg_adc);
+
+    delay_temp();
+
+//    for(delayi=0;delayi<1000;delayi++)                  //DEAD_delay
+//    {
+//        for(delayj=0;delayj<1000;delayj++)
+//        {
+//
+//        }
+//    }
+    return avg_adc;
+}
+
+
+void delay_temp(void)
+{
+	unsigned int delayi=0;
+	unsigned int delayj=0;
+
+	for(delayi=0;delayi<1000;delayi++)                  //DEAD_delay
+	{
+		for(delayj=0;delayj<1000;delayj++)
+		{
+
+		}
+	}
+}
+
+void funcFreqCaptureInit(void)
+{
+    QTMR_GetDefaultConfig(&qtmrConfig);
+    /* Initial the input channel. */
+    qtmrConfig.primarySource = QTMR_PRIMARY_SOURCE;
+    QTMR_Init(BOARD_QTMR_BASEADDR, BOARD_QTMR_INPUT_CAPTURE_CHANNEL, &qtmrConfig);
+    /* Setup the input capture */
+    QTMR_SetupInputCapture(BOARD_QTMR_BASEADDR, BOARD_QTMR_INPUT_CAPTURE_CHANNEL, QTMR_CounterInputPin, false, true,
+                           kQTMR_RisingEdge);
+    /* Enable at the NVIC */
+    EnableIRQ(QTMR_IRQ_ID);
+    /* Enable timer compare interrupt */
+    QTMR_EnableInterrupts(BOARD_QTMR_BASEADDR, BOARD_QTMR_INPUT_CAPTURE_CHANNEL, kQTMR_EdgeInterruptEnable);
+    /* Start the input channel to count on rising edge of the primary source clock */
+    QTMR_StartTimer(BOARD_QTMR_BASEADDR, BOARD_QTMR_INPUT_CAPTURE_CHANNEL, kQTMR_PriSrcRiseEdge);
+    counterClock = QTMR_SOURCE_CLOCK / 1000U;
+}
+
+unsigned long funcReadfrequency(void)
+{
+	ucfreqcount = 0;
+
+	while (ucfreqcount < 5 || timeCapt == 0)
+	{
+		while (!(qtmrIsrFlag))
+		{
+
+		}
+		qtmrIsrFlag = false;
+		ucfreqcount++;
+		timeCapt = BOARD_QTMR_BASEADDR->CHANNEL[BOARD_QTMR_INPUT_CAPTURE_CHANNEL].CAPT;
+	}
+
+	tusec = (timeCapt * 1000U) / counterClock;
+	tusec = tusec / 1000000;
+	tusec = 1 / tusec;
+	freq = tusec;
+}
+
+
+void funcI2cWrite(uint8_t i2caddress,uint8_t i2cdata)
+{
+	LPI2C_MasterStart(EXAMPLE_I2C_MASTER, LPI2C_MASTER_SLAVE_ADDR_7BIT, kLPI2C_Write);
+	LPI2C_MasterSend(EXAMPLE_I2C_MASTER,&i2caddress, 1);
+	LPI2C_MasterSend(EXAMPLE_I2C_MASTER,&i2cdata,1);
+    LPI2C_MasterStop(EXAMPLE_I2C_MASTER);
+
+ //   ms_delay(10);
+}
+
+uint8_t  funcI2cRead(uint8_t i2cReadaddress)
+{
+	uint8_t test=0;
+
+	LPI2C_MasterStart(EXAMPLE_I2C_MASTER, LPI2C_MASTER_SLAVE_ADDR_7BIT, kLPI2C_Write);
+	LPI2C_MasterSend (EXAMPLE_I2C_MASTER,&i2cReadaddress, 1);
+    LPI2C_MasterRepeatedStart(EXAMPLE_I2C_MASTER, LPI2C_MASTER_SLAVE_ADDR_7BIT, kLPI2C_Read);
+    LPI2C_MasterReceive(EXAMPLE_I2C_MASTER,&test, 1);
+    LPI2C_MasterStop(EXAMPLE_I2C_MASTER);
+
+    return test;
+}
+
+void funcWriteRTC(void)
+{
+	    uint8_t temp_data=0;
+
+	    PM_var=1;
+		funcI2cWrite(CTRL_STATUS_ADDRESS,0x10);                    // WRITE RTC DATA
+		temp_data=hexa2bcd_rtc(0);
+		funcI2cWrite(SECOND_ADDRESS,temp_data);
+		temp_data=hexa2bcd_rtc(34);
+		funcI2cWrite(MINUTE_ADDRESS,temp_data);
+		temp_data=hexa2bcd_rtc(12);
+		temp_data=(SET_12HOUR_AM & (PM_var << 5) | (temp_data));
+		funcI2cWrite(HOUR_ADDRESS,temp_data);
+
+		temp_data=hexa2bcd_rtc(28);
+		funcI2cWrite(DATE_ADDRESS,temp_data);
+		temp_data=hexa2bcd_rtc(3);
+		funcI2cWrite(MONTH_ADDRESS,temp_data);
+		temp_data=hexa2bcd_rtc(22);
+		funcI2cWrite(YEAR_ADDRESS,temp_data);
+
+		funcI2cWrite(CTRL_STATUS_ADDRESS,0x00);
+}
+
+
+void funcReadRTC(void)
+{
+	funcI2cWrite(CTRL_STATUS_ADDRESS,0x00);                //READ RTC DATA
+
+	rtc_sec=  funcI2cRead(SECOND_ADDRESS);
+	rtc_min=  funcI2cRead(MINUTE_ADDRESS);
+	rtc_hour= funcI2cRead(HOUR_ADDRESS);
+	rtc_date= funcI2cRead(DATE_ADDRESS);
+	rtc_month=funcI2cRead(MONTH_ADDRESS);
+	rtc_year= funcI2cRead(YEAR_ADDRESS);
+
+	funcI2cWrite(CTRL_STATUS_ADDRESS,0x10);
+
+	PM_var = (rtc_hour >>5) & 0x01;
+	rtc_hour  = bcd2bin((MASK_12HOUR & rtc_hour));
+	rtc_min	  = bcd2bin((MASK_MINUTE & rtc_min));
+	rtc_sec	  = bcd2bin((MASK_SECOND & rtc_sec));
+	rtc_date  = bcd2bin((MASK_DATE & rtc_date));
+	rtc_month = bcd2bin((MASK_MONTH & rtc_month));
+	rtc_year  = bcd2bin((MASK_YEAR & rtc_year));
+
+//	ms_delay(100);
+}
+
+uint16_t bcd2bin(uint16_t BCD)
+{
+	return (((BCD>>4)*10) + (BCD & 0xF));
+}
+
+uint8_t  hexa2bcd_rtc(uint8_t temp_data)
+{
+	uint16_t  bcd_result = 0;
+	uint16_t  shift = 0;
+	uint8_t  temp_data1 = temp_data;
+
+	while(temp_data1>0)
+	{
+		bcd_result |= (temp_data1 % 10) <<(shift++ << 2);
+		temp_data1 /=10;
+	}
+	return(bcd_result);
+}
+void funcRTCInit(void)
+{
+    CLOCK_SetMux(kCLOCK_Lpi2cMux, LPI2C_CLOCK_SOURCE_SELECT);
+    CLOCK_SetDiv(kCLOCK_Lpi2cDiv, LPI2C_CLOCK_SOURCE_DIVIDER);
+
+    LPI2C_MasterGetDefaultConfig(&masterConfig);
+
+    masterConfig.enableMaster=true;
+    masterConfig.baudRate_Hz = LPI2C_BAUDRATE;
+    LPI2C_MasterInit(EXAMPLE_I2C_MASTER, &masterConfig, LPI2C_MASTER_CLOCK_FREQUENCY);
+}

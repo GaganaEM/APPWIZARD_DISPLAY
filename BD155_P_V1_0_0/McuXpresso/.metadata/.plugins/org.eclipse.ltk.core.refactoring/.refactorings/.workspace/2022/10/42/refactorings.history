@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;evkbimxrt1050_qtmr_timer&apos;" deleteContents="true" description="Delete resource &apos;evkbimxrt1050_qtmr_timer&apos;" element1="/evkbimxrt1050_qtmr_timer" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1665463510691"/>&#x0A;<refactoring comment="Delete resource &apos;evkbimxrt1050_glow_lenet_mnist_camera&apos;" deleteContents="true" description="Delete resource &apos;evkbimxrt1050_glow_lenet_mnist_camera&apos;" element1="/evkbimxrt1050_glow_lenet_mnist_camera" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1665741879659"/>
+</session>
